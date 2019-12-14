@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .calendar-days-wrap::before,
+        .calendar-dates::before,
+        .calendar-days-wrap::after,
+        .calendar-dates::after {
+            content:'';
+            display: table;
+            clear: both;
+        }
+        .calendar-days-wrap,
+        .calendar-dates {
+            max-width: 850px;
+        }
+        .calendar-day {
+            width: 120px;
+            padding: 10px 5px;
+            float: left;
+            text-align: center;
+        }
+        .calendar-date {
+            width: 120px;
+            border: 0;
+            padding: 10px 5px;
+            background: #eee;
+            border: 1px solid #fff;
+            float: left;
+            font-size: 16px;
+        }
+        .calendar-date.calendar-date-prev,
+        .calendar-date.calendar-date-next {
+            background: transparent;
+            color: #999;
+        }
+    </style>
 </head>
 <body>
     <input type="text" id="calendarInput" />

@@ -451,6 +451,8 @@ const ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root ele
 const BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
 const DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
 const MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
+const DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
+const DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
 const CALENDARWRAP_HTML = `<div class="calendar-wrap"></div>`;
 const CALENDARROOT_HTML = `<div class="calendar-root"></div>`;
 const CALENDARHEADER_HTML = `<div class="calendar-header">
@@ -465,13 +467,13 @@ const DATEELEMENT_HTML = `<button type="button" class="calendar-date">{{date}}</
 const MONTHELEMENT_HTML = `<div class="calendar-month">{{month}}</div>`;
 const YEARELEMENT_HTML = `<div class="calendar-year">{{year}}</div>`;
 const DAYS = [
+    'Sunday',
     'Monday',
     'Tuesday',
     'Wednesday',
     'Thursday',
     'Friday',
-    'Saturday',
-    'Sunday'
+    'Saturday'
 ];
 const MONTHS = [
     'January',
@@ -496,6 +498,19 @@ function repl(str, keyMap) {
         }
     });
     return str;
+}
+
+function daysInMonth(monthNumber, year) {
+    const dateObject = new Date();
+    dateObject.setFullYear(year);
+    dateObject.setMonth(monthNumber);
+    dateObject.setDate(31);
+    if (dateObject.getDate() === 31) {
+        return 31;
+    } else {
+        dateObject.setDate(31 - dateObject.getDate());
+        return dateObject.getDate();
+    }
 }
 
 class ArgonCalendar {
@@ -532,6 +547,9 @@ class ArgonCalendar {
                 return repl(YEARELEMENT_HTML, { year });
             }
         }, config));
+        if (this.config.weekStartsFrom >= 7 || this.config.weekStartsFrom < 0) {
+            throw new Error(DAY_INDEX_ERROR);
+        }
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
         this.drawCalendar();
@@ -569,13 +587,14 @@ class ArgonCalendar {
             if (config.showFooter) {
                 calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
             }
-            this.drawDays();
+            this.drawMonths();
         } else {
             throw new Error(ROOT_ELEMENT_ERROR);
         }
     }
-    drawDays() {
+    drawMonths() {
         const current = new Date();
+        current.setDate(1);
         let index = 0;
         while (index < this.config.numberOfCalendars) {
             const monthWrap = $('<div class="calendar-month"></div>');
@@ -594,11 +613,38 @@ class ArgonCalendar {
             this.calBody.append(monthWrap);
             this.drawDates(calDatesWrap, current);
             index += 1;
+            current.setDate(1);
             current.setMonth(current.getMonth() + 1);
         }
     }
-    drawDates() {
-        // TODO
+    drawDates(calDatesWrap, current) { // eslint-disable-line
+        const totalDays = daysInMonth(current.getMonth(), current.getFullYear());
+        let startPadding = current.getDay() - DAYS.indexOf(this.daysTransformed[0]);
+        if (startPadding < 0) {
+            startPadding = 7 - Math.abs(startPadding);
+        }
+        try {
+            for (let i = 0; i < startPadding; i++) {
+                const targetDate = current.getDate() - startPadding + i;
+                const prevDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
+                calDatesWrap.append($(this.config.dateElement(prevDate.getDate(), prevDate)).addClass('calendar-date-prev'));
+            }
+            for (let i = 1; i <= totalDays; i++) {
+                current.setDate(i);
+                calDatesWrap.append(this.config.dateElement(i, current));
+            }
+            let endPadding = DAYS.indexOf(this.daysTransformed[6]) - current.getDay();
+            if (endPadding < 0) {
+                endPadding = 7 - Math.abs(endPadding);
+            }
+            for (let i = 0; i < endPadding; i++) {
+                const targetDate = current.getDate() + i + 1;
+                const nextDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
+                calDatesWrap.append($(this.config.dateElement(nextDate.getDate(), nextDate)).addClass('calendar-date-next'));
+            }
+        } catch (e) {
+            throw new Error(DATE_ELEMENT_ERROR);
+        }
     }
 }
 

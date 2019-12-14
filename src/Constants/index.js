@@ -4,6 +4,8 @@ export const ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid r
 export const BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
 export const DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
 export const MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
+export const DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
+export const DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
 export const CALENDARWRAP_HTML = `<div class="calendar-wrap"></div>`;
 export const CALENDARROOT_HTML = `<div class="calendar-root"></div>`;
 export const CALENDARHEADER_HTML = `<div class="calendar-header">
@@ -18,13 +20,13 @@ export const DATEELEMENT_HTML = `<button type="button" class="calendar-date">{{d
 export const MONTHELEMENT_HTML = `<div class="calendar-month">{{month}}</div>`;
 export const YEARELEMENT_HTML = `<div class="calendar-year">{{year}}</div>`;
 export const DAYS = [
+    'Sunday',
     'Monday',
     'Tuesday',
     'Wednesday',
     'Thursday',
     'Friday',
-    'Saturday',
-    'Sunday'
+    'Saturday'
 ];
 export const MONTHS = [
     'January',

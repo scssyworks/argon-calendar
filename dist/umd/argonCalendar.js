@@ -750,6 +750,8 @@
   var BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
   var DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
   var MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
+  var DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
+  var DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
   var CALENDARWRAP_HTML = "<div class=\"calendar-wrap\"></div>";
   var CALENDARROOT_HTML = "<div class=\"calendar-root\"></div>";
   var CALENDARHEADER_HTML = "<div class=\"calendar-header\">\n    This is a placeholder header. Use \"calendarHeader()\" method to customise calendar header\n</div>";
@@ -759,7 +761,7 @@
   var DATEELEMENT_HTML = "<button type=\"button\" class=\"calendar-date\">{{date}}</button>";
   var MONTHELEMENT_HTML = "<div class=\"calendar-month\">{{month}}</div>";
   var YEARELEMENT_HTML = "<div class=\"calendar-year\">{{year}}</div>";
-  var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   function repl(str, keyMap) {
@@ -771,6 +773,19 @@
       }
     });
     return str;
+  }
+  function daysInMonth(monthNumber, year) {
+    var dateObject = new Date();
+    dateObject.setFullYear(year);
+    dateObject.setMonth(monthNumber);
+    dateObject.setDate(31);
+
+    if (dateObject.getDate() === 31) {
+      return 31;
+    } else {
+      dateObject.setDate(31 - dateObject.getDate());
+      return dateObject.getDate();
+    }
   }
 
   var ArgonCalendar =
@@ -821,6 +836,11 @@
           });
         }
       }, config));
+
+      if (this.config.weekStartsFrom >= 7 || this.config.weekStartsFrom < 0) {
+        throw new Error(DAY_INDEX_ERROR);
+      }
+
       this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
       this.monthsTransformed = MONTHS;
       this.drawCalendar();
@@ -873,15 +893,16 @@
             calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
           }
 
-          this.drawDays();
+          this.drawMonths();
         } else {
           throw new Error(ROOT_ELEMENT_ERROR);
         }
       }
     }, {
-      key: "drawDays",
-      value: function drawDays() {
+      key: "drawMonths",
+      value: function drawMonths() {
         var current = new Date();
+        current.setDate(1);
         var index = 0;
 
         while (index < this.config.numberOfCalendars) {
@@ -904,12 +925,48 @@
           this.calBody.append(monthWrap);
           this.drawDates(calDatesWrap, current);
           index += 1;
+          current.setDate(1);
           current.setMonth(current.getMonth() + 1);
         }
       }
     }, {
       key: "drawDates",
-      value: function drawDates() {// TODO
+      value: function drawDates(calDatesWrap, current) {
+        // eslint-disable-line
+        var totalDays = daysInMonth(current.getMonth(), current.getFullYear());
+        var startPadding = current.getDay() - DAYS.indexOf(this.daysTransformed[0]);
+
+        if (startPadding < 0) {
+          startPadding = 7 - Math.abs(startPadding);
+        }
+
+        try {
+          for (var i = 0; i < startPadding; i++) {
+            var targetDate = current.getDate() - startPadding + i;
+            var prevDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
+            calDatesWrap.append($(this.config.dateElement(prevDate.getDate(), prevDate)).addClass('calendar-date-prev'));
+          }
+
+          for (var _i = 1; _i <= totalDays; _i++) {
+            current.setDate(_i);
+            calDatesWrap.append(this.config.dateElement(_i, current));
+          }
+
+          var endPadding = DAYS.indexOf(this.daysTransformed[6]) - current.getDay();
+
+          if (endPadding < 0) {
+            endPadding = 7 - Math.abs(endPadding);
+          }
+
+          for (var _i2 = 0; _i2 < endPadding; _i2++) {
+            var _targetDate = current.getDate() + _i2 + 1;
+
+            var nextDate = new Date(current.getFullYear(), current.getMonth(), _targetDate);
+            calDatesWrap.append($(this.config.dateElement(nextDate.getDate(), nextDate)).addClass('calendar-date-next'));
+          }
+        } catch (e) {
+          throw new Error(DATE_ELEMENT_ERROR);
+        }
       }
     }]);
 
