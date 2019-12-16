@@ -29,11 +29,20 @@
   },
   "keywords": [
     "calendar",
+    "calendar-library",
     "calendar-plugin",
+    "plugin-builder",
+    "argon-calendar",
+    "argon",
     "date-picker",
     "date",
+    "date-range",
+    "range",
+    "range-selector",
+    "selector",
     "time",
-    "events"
+    "events",
+    "hackable"
   ],
   "files": [
     "dist/esm/",
