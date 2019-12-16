@@ -1,6 +1,6 @@
 {
   "name": "argon-calendar",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A customizable calendar component hackable to its core.",
   "main": "dist/umd/argonCalendar.js",
   "module": "dist/esm/argonCalendar.esm.js",
