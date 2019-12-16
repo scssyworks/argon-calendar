@@ -9,7 +9,10 @@ import {
     DAY_ELEMENT_ERROR,
     MONTH_ELEMENT_ERROR,
     DATE_ELEMENT_ERROR,
-    DAY_INDEX_ERROR
+    DAY_INDEX_ERROR,
+    RANGE_SELECTION_ERROR,
+    DATE_SELECTION_ERROR,
+    SWAP_WARNING
 } from './Constants';
 import {
     calendarWrap,
@@ -22,14 +25,15 @@ import {
     dateElement
 } from './Builder';
 import { daysInMonth } from './Utils';
+import { assign } from './Assign';
 
-class ArgonCalendar {
+export default class ArgonCalendar {
     constructor(config = {}) {
-        this.config = Object.freeze($.extend({
+        this.config = Object.freeze(assign({
             target: document.body,
             weekStartsFrom: 0,
             numberOfCalendars: 1,
-            enableRange: false,
+            rangeSelection: false,
             calendarWrap,
             calendarRoot,
             calendarHeader,
@@ -45,9 +49,9 @@ class ArgonCalendar {
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
         this.today = new Date();
-        this.drawCalendar();
+        this._drawCalendar();
     }
-    drawCalendar() {
+    _drawCalendar() {
         const config = this.config;
         this.currentTarget = $(config.target).first();
         if (this.currentTarget.data('calendarActive')) {
@@ -80,12 +84,12 @@ class ArgonCalendar {
             if (config.showFooter) {
                 this.calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
             }
-            this.drawMonths();
+            this._drawMonths();
         } else {
             throw new Error(ROOT_ELEMENT_ERROR);
         }
     }
-    drawMonths(dateRef) {
+    _drawMonths(dateRef) {
         this.calBody.empty();
         const current = dateRef || (new Date());
         current.setDate(1);
@@ -106,13 +110,13 @@ class ArgonCalendar {
             const calDatesWrap = $('<div class="calendar-dates-wrap"></div>');
             calMonth.append(calDatesWrap);
             this.calBody.append(calMonth);
-            this.drawDates(calDatesWrap, current);
+            this._drawDates(calDatesWrap, current);
             index += 1;
             current.setDate(1);
             current.setMonth(current.getMonth() + 1);
         }
     }
-    drawDates(calDatesWrap, current) { // eslint-disable-line
+    _drawDates(calDatesWrap, current) { // eslint-disable-line
         const totalDays = daysInMonth(current.getMonth(), current.getFullYear());
         let startPadding = current.getDay() - DAYS.indexOf(this.daysTransformed[0]);
         if (startPadding < 0) {
@@ -144,34 +148,93 @@ class ArgonCalendar {
     // Public methods
     destroy() {
         this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
-        this.calTarget.unwrap();
+        if (this.calTarget.unwrap) {
+            this.calTarget.unwrap();
+        }
         this.calRoot.remove();
+        return this;
     }
     next(skip = 1) {
         const numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars + skip);
-        this.drawMonths(this.startMonthDate);
+        this._drawMonths(this.startMonthDate);
+        return this;
     }
     prev(skip = 1) {
         const numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
-        this.drawMonths(this.startMonthDate);
+        this._drawMonths(this.startMonthDate);
+        return this;
     }
     setDate(date) {
-        if (!this.config.enableRange) {
-            const current = date instanceof Date
-                ? new Date(date.valueOf()) :
-                new Date(...arguments);
+        if (!this.config.rangeSelection) {
             this.currentDate = date instanceof Date ? date : new Date(...arguments);
-            this.drawMonths(current);
+            this._drawMonths(new Date(this.currentDate.valueOf()));
+        } else {
+            throw new Error(DATE_SELECTION_ERROR);
         }
+        return this;
     }
     getDate() {
+        if (this.config.rangeSelection) {
+            throw new Error(DATE_SELECTION_ERROR);
+        }
         return new Date((this.currentDate || this.today).valueOf());
     }
     getToday() {
         return new Date(this.today.valueOf());
     }
+    setStartDate(date) {
+        if (this.config.rangeSelection) {
+            this.startSelectionDate = date instanceof Date
+                ? new Date(date.valueOf())
+                : new Date(...arguments);
+            this.endSelectionDate = new Date(this.startSelectionDate.valueOf());
+        } else {
+            throw new Error(RANGE_SELECTION_ERROR);
+        }
+        return this;
+    }
+    setEndDate(date) {
+        if (this.config.rangeSelection) {
+            this.endSelectionDate = date instanceof Date
+                ? new Date(date.valueOf())
+                : new Date(...arguments);
+            if (!this.startSelectionDate) {
+                this.startSelectionDate = new Date(this.endSelectionDate.valueOf());
+            }
+            if (
+                this.startSelectionDate
+                && this.endSelectionDate.getTime() < this.startSelectionDate.getTime()
+            ) {
+                console.warn(SWAP_WARNING);
+                const endDate = new Date(this.startSelectionDate.valueOf());
+                this.startSelectionDate = this.endSelectionDate;
+                this.endSelectionDate = endDate;
+            }
+        } else {
+            throw new Error(RANGE_SELECTION_ERROR);
+        }
+        return this;
+    }
+    getStartDate() {
+        if (!this.config.rangeSelection) {
+            throw new Error(RANGE_SELECTION_ERROR);
+        }
+        return new Date((this.startSelectionDate || this.today).valueOf());
+    }
+    getEndDate() {
+        if (!this.config.rangeSelection) {
+            throw new Error(RANGE_SELECTION_ERROR);
+        }
+        return new Date((this.endSelectionDate || this.today).valueOf());
+    }
+    jumpTo(date) {
+        this._drawMonths((
+            date instanceof Date
+                ? new Date(date.valueOf())
+                : new Date(...arguments)
+        ));
+        return this;
+    }
 }
-
-window.ArgonCalendar = ArgonCalendar;

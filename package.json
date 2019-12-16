@@ -1,9 +1,10 @@
 {
   "name": "argon-calendar",
   "version": "0.0.1",
-  "description": "Sample rollup app",
+  "description": "A customizable calendar component hackable to its core.",
   "main": "dist/umd/argonCalendar.js",
   "module": "dist/esm/argonCalendar.esm.js",
+  "types": "typings/argonCalendar.d.ts",
   "scripts": {
     "start": "rollup -c --watch --environment SERVE:true",
     "build": "npm run test && rollup -c",
@@ -35,7 +36,9 @@
     "events"
   ],
   "files": [
-    "dist/"
+    "dist/esm/",
+    "dist/umd/",
+    "typings/"
   ],
   "repository": {
     "type": "git",

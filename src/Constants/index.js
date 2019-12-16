@@ -9,6 +9,10 @@ export const DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day 
 export const MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
 export const DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
 export const DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
+export const RANGE_SELECTION_ERROR = 'To use this feature set "rangeSelection" to true';
+export const DATE_SELECTION_ERROR = 'To use this feature set "rangeSelection" to false';
+export const SWAP_WARNING = 'Swapping start date with end date as current end date is smaller than start date.';
+// Calendar HTML defaults
 export const CALENDARWRAP_HTML = `<div class="calendar-wrap"></div>`;
 export const CALENDARROOT_HTML = `<div class="calendar-root"></div>`;
 export const CALENDARHEADER_HTML = `<div class="calendar-header">

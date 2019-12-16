@@ -1,7 +1,8 @@
-(function (factory) {
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  factory();
-}((function () { 'use strict';
+  (global = global || self, global.argonCalendar = factory());
+}(this, (function () { 'use strict';
 
   function _typeof(obj) {
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
@@ -136,45 +137,6 @@
     throw new TypeError("Invalid attempt to spread non-iterable instance");
   }
 
-  /**
-   * Returns true if argument is object
-   * @param {*} arg Argument
-   */
-  function isObject(arg) {
-    return arg && _typeof(arg) === 'object';
-  }
-  /**
-   * Inner loop function for assign
-   * @private
-   * @param {object} ref Argument object
-   * @param {object} target First object
-   */
-
-
-  function loopFunc(ref, target) {
-    if (isObject(ref)) {
-      Object.keys(ref).forEach(function (key) {
-        target[key] = ref[key];
-      });
-    }
-  }
-  /**
-   * Polyfill for Object.assign only smaller and with less features
-   * @private
-   * @returns {object}
-   */
-
-
-  function assign() {
-    var target = isObject(arguments[0]) ? arguments[0] : {};
-
-    for (var i = 1; i < arguments.length; i++) {
-      loopFunc(arguments[i], target);
-    }
-
-    return target;
-  }
-
   // Selector
   var WRAP_ERROR = 'Cannot wrap "undefined" element'; // Calendar
 
@@ -186,6 +148,10 @@
   var MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
   var DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
   var DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
+  var RANGE_SELECTION_ERROR = 'To use this feature set "rangeSelection" to true';
+  var DATE_SELECTION_ERROR = 'To use this feature set "rangeSelection" to false';
+  var SWAP_WARNING = 'Swapping start date with end date as current end date is smaller than start date.'; // Calendar HTML defaults
+
   var CALENDARWRAP_HTML = "<div class=\"calendar-wrap\"></div>";
   var CALENDARROOT_HTML = "<div class=\"calendar-root\"></div>";
   var CALENDARHEADER_HTML = "<div class=\"calendar-header\">\n    This is a placeholder header. Use \"calendarHeader()\" method to customise calendar header\n</div>";
@@ -196,29 +162,6 @@
   var MONTHELEMENT_HTML = "<div class=\"calendar-month\">{{month}}</div>";
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-  if (!Array.prototype.includes) {
-    Array.prototype.includes = function (item) {
-      return this.indexOf(item) > -1;
-    };
-  } // Polyfill custom event
-
-
-  if (typeof window.CustomEvent === 'undefined') {
-    var CustomEvent = function CustomEvent(event, params) {
-      params = params || {
-        bubbles: false,
-        cancelable: false,
-        detail: undefined
-      };
-      var evt = document.createEvent('CustomEvent');
-      evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-      return evt;
-    };
-
-    CustomEvent.prototype = window.Event.prototype;
-    window.CustomEvent = CustomEvent;
-  }
 
   function coerce(value) {
     switch (value) {
@@ -318,7 +261,7 @@
         }
 
         for (var i = 0; i < selectorRef.length; i++) {
-          if ([1, 9, 11].includes(selectorRef[i].nodeType)) {
+          if ([1, 9, 11].indexOf(selectorRef[i].nodeType) > -1) {
             this[this.length++] = selectorRef[i];
           }
         }
@@ -326,85 +269,6 @@
     }
 
     _createClass(Selector, [{
-      key: "trigger",
-      value: function trigger(eventType, data) {
-        this.each(function (ref) {
-          var customEvent = new window.CustomEvent(eventType, {
-            bubbles: true,
-            cancelable: true,
-            detail: data || []
-          });
-          ref.dispatchEvent(customEvent);
-        });
-        return this;
-      }
-    }, {
-      key: "on",
-      value: function on(eventName, selector, data, callback, useCapture) {
-        var $this = this;
-
-        if (arguments.length === 2) {
-          callback = selector;
-          selector = undefined;
-        }
-
-        if (arguments.length === 3) {
-          if (typeof data === 'boolean') {
-            useCapture = data;
-            callback = selector;
-            selector = data = undefined;
-          }
-
-          if (typeof data === 'function') {
-            callback = data;
-
-            if (!isValidSelector(selector)) {
-              data = selector;
-              selector = undefined;
-            } else {
-              data = undefined;
-            }
-          }
-        }
-
-        if (arguments.length === 4) {
-          if (typeof callback === 'boolean') {
-            useCapture = callback;
-            callback = data;
-
-            if (isValidSelector(selector)) {
-              data = undefined;
-            } else {
-              data = selector;
-              selector = undefined;
-            }
-          }
-        }
-
-        this.each(function (ref) {
-          ref.addEventListener(eventName, function (e) {
-            e.data = data;
-            var params = [e];
-
-            if (Array.isArray(e.detail)) {
-              params = params.concat(e.detail);
-            }
-
-            if (selector) {
-              var selectorRef = $this.find(selector).add($this);
-              var refSelectors = selectorRef.has(e.target);
-
-              if (refSelectors.length) {
-                callback.apply(refSelectors[0], params);
-              }
-            } else {
-              callback.apply(this, params);
-            }
-          }, useCapture);
-        });
-        return this;
-      }
-    }, {
       key: "html",
       value: function html(text) {
         if (typeof text === 'undefined') {
@@ -466,25 +330,6 @@
         return new Selector(allChildNodes);
       }
     }, {
-      key: "has",
-      value: function has(selector) {
-        var selectorRef = new Selector(selector);
-        var found = [];
-        this.each(function (ref) {
-          selectorRef.each(function (targetRef) {
-            if ((ref === targetRef || ref.contains(targetRef)) && !found.includes(ref)) {
-              found.push(ref);
-            }
-          });
-        });
-        return new Selector(found);
-      }
-    }, {
-      key: "contains",
-      value: function contains(selector) {
-        return this.has(selector).length > 0;
-      }
-    }, {
       key: "filter",
       value: function filter(callback) {
         var newSelectorRef = new Selector();
@@ -533,24 +378,6 @@
         }
 
         return this;
-      }
-    }, {
-      key: "find",
-      value: function find(selector) {
-        var found = [];
-
-        if (typeof selector === 'string') {
-          this.each(function (ref) {
-            var selected = new Selector(ref.querySelectorAll(selector));
-            selected.each(function (selectedRef) {
-              if (!found.includes(selectedRef)) {
-                found.push(selectedRef);
-              }
-            });
-          });
-        }
-
-        return new Selector(found);
       }
     }, {
       key: "data",
@@ -732,17 +559,6 @@
         });
         return newSelectorRef;
       }
-    }, {
-      key: "prev",
-      value: function prev() {
-        var newSelectorRef = new Selector();
-        this.each(function (el) {
-          if (el.previousSibling) {
-            newSelectorRef.add(el.previousSibling);
-          }
-        });
-        return newSelectorRef;
-      }
     }]);
 
     return Selector;
@@ -785,10 +601,6 @@
     return _construct(Selector, args);
   }
 
-  $.extend = function () {
-    return assign.apply(this, arguments);
-  };
-
   function repl(str, keyMap) {
     Object.keys(keyMap).forEach(function (key) {
       var value = keyMap[key];
@@ -813,8 +625,13 @@
     }
   }
 
-  function isToday(currentDate, referenceDate) {
+  function exact(currentDate, referenceDate) {
     return currentDate.getDate() === referenceDate.getDate() && currentDate.getMonth() === referenceDate.getMonth() && currentDate.getYear() === referenceDate.getYear();
+  }
+
+  function inRange(currentDate, startDate, endDate) {
+    var currentTime = currentDate.getTime();
+    return currentTime > startDate.getTime() && currentTime < endDate.getTime();
   }
 
   function calendarWrap() {
@@ -843,15 +660,70 @@
     });
   }
   function dateElement(date, current) {
-    if (isToday(this.today, current)) {
-      return $(repl(DATEELEMENT_HTML, {
-        date: date
-      })).addClass('is-today').outerHtml();
+    var dateEl = $(repl(DATEELEMENT_HTML, {
+      date: date
+    }));
+
+    if (exact(this.today, current)) {
+      dateEl.addClass('is-today');
     }
 
-    return repl(DATEELEMENT_HTML, {
-      date: date
-    });
+    if (this.config.rangeSelection) {
+      if (this.startSelectionDate && exact(this.startSelectionDate, current)) {
+        dateEl.addClass('is-start-date is-in-range');
+      }
+
+      if (this.endSelectionDate && exact(this.endSelectionDate, current)) {
+        dateEl.addClass('is-end-date is-in-range');
+      }
+
+      if (this.startSelectionDate && this.endSelectionDate && inRange(current, this.startSelectionDate, this.endSelectionDate)) {
+        dateEl.addClass('is-in-range');
+      }
+    } else if (this.currentDate && exact(this.currentDate, current)) {
+      dateEl.addClass('is-current-date');
+    }
+
+    return dateEl.outerHtml();
+  }
+
+  /**
+   * Returns true if argument is object
+   * @param {*} arg Argument
+   */
+  function isObject(arg) {
+    return arg && _typeof(arg) === 'object';
+  }
+  /**
+   * Inner loop function for assign
+   * @private
+   * @param {object} ref Argument object
+   * @param {object} target First object
+   */
+
+
+  function loopFunc(ref, target) {
+    if (isObject(ref)) {
+      Object.keys(ref).forEach(function (key) {
+        target[key] = ref[key];
+      });
+    }
+  }
+  /**
+   * Polyfill for Object.assign only smaller and with less features
+   * @private
+   * @returns {object}
+   */
+
+
+  function assign() {
+    var target = isObject(arguments[0]) ? arguments[0] : {};
+
+    for (var i = 1; i < arguments.length; i++) {
+      loopFunc(arguments[i], target);
+    }
+
+    return target;
   }
 
   var ArgonCalendar =
@@ -862,11 +734,11 @@
 
       _classCallCheck(this, ArgonCalendar);
 
-      this.config = Object.freeze($.extend({
+      this.config = Object.freeze(assign({
         target: document.body,
         weekStartsFrom: 0,
         numberOfCalendars: 1,
-        enableRange: false,
+        rangeSelection: false,
         calendarWrap: calendarWrap,
         calendarRoot: calendarRoot,
         calendarHeader: calendarHeader,
@@ -884,12 +756,13 @@
       this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
       this.monthsTransformed = MONTHS;
       this.today = new Date();
-      this.drawCalendar();
+
+      this._drawCalendar();
     }
 
     _createClass(ArgonCalendar, [{
-      key: "drawCalendar",
-      value: function drawCalendar() {
+      key: "_drawCalendar",
+      value: function _drawCalendar() {
         var config = this.config;
         this.currentTarget = $(config.target).first();
 
@@ -934,14 +807,14 @@
             this.calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
           }
 
-          this.drawMonths();
+          this._drawMonths();
         } else {
           throw new Error(ROOT_ELEMENT_ERROR);
         }
       }
     }, {
-      key: "drawMonths",
-      value: function drawMonths(dateRef) {
+      key: "_drawMonths",
+      value: function _drawMonths(dateRef) {
         this.calBody.empty();
         var current = dateRef || new Date();
         current.setDate(1);
@@ -966,15 +839,17 @@
           var calDatesWrap = $('<div class="calendar-dates-wrap"></div>');
           calMonth.append(calDatesWrap);
           this.calBody.append(calMonth);
-          this.drawDates(calDatesWrap, current);
+
+          this._drawDates(calDatesWrap, current);
+
           index += 1;
           current.setDate(1);
           current.setMonth(current.getMonth() + 1);
         }
       }
     }, {
-      key: "drawDates",
-      value: function drawDates(calDatesWrap, current) {
+      key: "_drawDates",
+      value: function _drawDates(calDatesWrap, current) {
         // eslint-disable-line
         var totalDays = daysInMonth(current.getMonth(), current.getFullYear());
         var startPadding = current.getDay() - DAYS.indexOf(this.daysTransformed[0]);
@@ -1016,8 +891,13 @@
       key: "destroy",
       value: function destroy() {
         this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
-        this.calTarget.unwrap();
+
+        if (this.calTarget.unwrap) {
+          this.calTarget.unwrap();
+        }
+
         this.calRoot.remove();
+        return this;
       }
     }, {
       key: "next",
@@ -1025,7 +905,10 @@
         var skip = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars + skip);
-        this.drawMonths(this.startMonthDate);
+
+        this._drawMonths(this.startMonthDate);
+
+        return this;
       }
     }, {
       key: "prev",
@@ -1033,20 +916,31 @@
         var skip = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
-        this.drawMonths(this.startMonthDate);
+
+        this._drawMonths(this.startMonthDate);
+
+        return this;
       }
     }, {
       key: "setDate",
       value: function setDate(date) {
-        if (!this.config.enableRange) {
-          var current = date instanceof Date ? new Date(date.valueOf()) : _construct(Date, Array.prototype.slice.call(arguments));
+        if (!this.config.rangeSelection) {
           this.currentDate = date instanceof Date ? date : _construct(Date, Array.prototype.slice.call(arguments));
-          this.drawMonths(current);
+
+          this._drawMonths(new Date(this.currentDate.valueOf()));
+        } else {
+          throw new Error(DATE_SELECTION_ERROR);
         }
+
+        return this;
       }
     }, {
       key: "getDate",
       value: function getDate() {
+        if (this.config.rangeSelection) {
+          throw new Error(DATE_SELECTION_ERROR);
+        }
+
         return new Date((this.currentDate || this.today).valueOf());
       }
     }, {
@@ -1054,12 +948,71 @@
       value: function getToday() {
         return new Date(this.today.valueOf());
       }
+    }, {
+      key: "setStartDate",
+      value: function setStartDate(date) {
+        if (this.config.rangeSelection) {
+          this.startSelectionDate = date instanceof Date ? new Date(date.valueOf()) : _construct(Date, Array.prototype.slice.call(arguments));
+          this.endSelectionDate = new Date(this.startSelectionDate.valueOf());
+        } else {
+          throw new Error(RANGE_SELECTION_ERROR);
+        }
+
+        return this;
+      }
+    }, {
+      key: "setEndDate",
+      value: function setEndDate(date) {
+        if (this.config.rangeSelection) {
+          this.endSelectionDate = date instanceof Date ? new Date(date.valueOf()) : _construct(Date, Array.prototype.slice.call(arguments));
+
+          if (!this.startSelectionDate) {
+            this.startSelectionDate = new Date(this.endSelectionDate.valueOf());
+          }
+
+          if (this.startSelectionDate && this.endSelectionDate.getTime() < this.startSelectionDate.getTime()) {
+            console.warn(SWAP_WARNING);
+            var endDate = new Date(this.startSelectionDate.valueOf());
+            this.startSelectionDate = this.endSelectionDate;
+            this.endSelectionDate = endDate;
+          }
+        } else {
+          throw new Error(RANGE_SELECTION_ERROR);
+        }
+
+        return this;
+      }
+    }, {
+      key: "getStartDate",
+      value: function getStartDate() {
+        if (!this.config.rangeSelection) {
+          throw new Error(RANGE_SELECTION_ERROR);
+        }
+
+        return new Date((this.startSelectionDate || this.today).valueOf());
+      }
+    }, {
+      key: "getEndDate",
+      value: function getEndDate() {
+        if (!this.config.rangeSelection) {
+          throw new Error(RANGE_SELECTION_ERROR);
+        }
+
+        return new Date((this.endSelectionDate || this.today).valueOf());
+      }
+    }, {
+      key: "jumpTo",
+      value: function jumpTo(date) {
+        this._drawMonths(date instanceof Date ? new Date(date.valueOf()) : _construct(Date, Array.prototype.slice.call(arguments)));
+
+        return this;
+      }
     }]);
 
     return ArgonCalendar;
   }();
 
-  window.ArgonCalendar = ArgonCalendar;
+  return ArgonCalendar;
 
 })));
 //# sourceMappingURL=argonCalendar.js.map
