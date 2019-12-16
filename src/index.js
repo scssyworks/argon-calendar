@@ -1,6 +1,27 @@
 import { $ } from './Selector';
-import { WRAPPING_ELEMENT_ERROR, CALENDARWRAP_HTML, CALENDARROOT_HTML, ROOT_ELEMENT_ERROR, CALENDARHEADER_HTML, CALENDARBODYROOT_HTML, CALENDARFOOTER_HTML, BODY_ROOT_ELEMENT_ERROR, DAYS, MONTHS, ACTIVE_CALENDAR_ERROR, DAYELEMENT_HTML, MONTHELEMENT_HTML, DATEELEMENT_HTML, YEARELEMENT_HTML, DAY_ELEMENT_ERROR, MONTH_ELEMENT_ERROR, DATE_ELEMENT_ERROR, DAY_INDEX_ERROR } from './Constants';
-import { repl, daysInMonth } from './Utils';
+import {
+    WRAPPING_ELEMENT_ERROR,
+    ROOT_ELEMENT_ERROR,
+    BODY_ROOT_ELEMENT_ERROR,
+    DAYS,
+    MONTHS,
+    ACTIVE_CALENDAR_ERROR,
+    DAY_ELEMENT_ERROR,
+    MONTH_ELEMENT_ERROR,
+    DATE_ELEMENT_ERROR,
+    DAY_INDEX_ERROR
+} from './Constants';
+import {
+    calendarWrap,
+    calendarRoot,
+    calendarHeader,
+    calendarBodyRoot,
+    calendarFooter,
+    dayElement,
+    monthElement,
+    dateElement
+} from './Builder';
+import { daysInMonth } from './Utils';
 
 class ArgonCalendar {
     constructor(config = {}) {
@@ -8,39 +29,22 @@ class ArgonCalendar {
             target: document.body,
             weekStartsFrom: 0,
             numberOfCalendars: 1,
-            calendarWrap() {
-                return CALENDARWRAP_HTML;
-            },
-            calendarRoot() {
-                return CALENDARROOT_HTML;
-            },
-            calendarHeader() {
-                return CALENDARHEADER_HTML;
-            },
-            calendarBodyRoot() {
-                return CALENDARBODYROOT_HTML;
-            },
-            calendarFooter() {
-                return CALENDARFOOTER_HTML;
-            },
-            dayElement(day) {
-                return repl(DAYELEMENT_HTML, { day });
-            },
-            monthElement(month) {
-                return repl(MONTHELEMENT_HTML, { month });
-            },
-            dateElement(date) {
-                return repl(DATEELEMENT_HTML, { date });
-            },
-            yearElement(year) {
-                return repl(YEARELEMENT_HTML, { year });
-            }
+            enableRange: false,
+            calendarWrap,
+            calendarRoot,
+            calendarHeader,
+            calendarBodyRoot,
+            calendarFooter,
+            dayElement,
+            monthElement,
+            dateElement
         }, config));
         if (this.config.weekStartsFrom >= 7 || this.config.weekStartsFrom < 0) {
             throw new Error(DAY_INDEX_ERROR);
         }
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
+        this.today = new Date();
         this.drawCalendar();
     }
     drawCalendar() {
@@ -118,11 +122,11 @@ class ArgonCalendar {
             for (let i = 0; i < startPadding; i++) {
                 const targetDate = current.getDate() - startPadding + i;
                 const prevDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
-                calDatesWrap.append($(this.config.dateElement(prevDate.getDate(), prevDate)).addClass('calendar-date-prev'));
+                calDatesWrap.append($(this.config.dateElement.apply(this, [prevDate.getDate(), prevDate])).addClass('calendar-date-prev'));
             }
             for (let i = 1; i <= totalDays; i++) {
                 current.setDate(i);
-                calDatesWrap.append(this.config.dateElement(i, current));
+                calDatesWrap.append(this.config.dateElement.apply(this, [i, current]));
             }
             let endPadding = DAYS.indexOf(this.daysTransformed[6]) - current.getDay();
             if (endPadding < 0) {
@@ -131,7 +135,7 @@ class ArgonCalendar {
             for (let i = 0; i < endPadding; i++) {
                 const targetDate = current.getDate() + i + 1;
                 const nextDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
-                calDatesWrap.append($(this.config.dateElement(nextDate.getDate(), nextDate)).addClass('calendar-date-next'));
+                calDatesWrap.append($(this.config.dateElement.apply(this, [nextDate.getDate(), nextDate])).addClass('calendar-date-next'));
             }
         } catch (e) {
             throw new Error(DATE_ELEMENT_ERROR);
@@ -152,6 +156,21 @@ class ArgonCalendar {
         const numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
         this.drawMonths(this.startMonthDate);
+    }
+    setDate(date) {
+        if (!this.config.enableRange) {
+            const current = date instanceof Date
+                ? new Date(date.valueOf()) :
+                new Date(...arguments);
+            this.currentDate = date instanceof Date ? date : new Date(...arguments);
+            this.drawMonths(current);
+        }
+    }
+    getDate() {
+        return new Date((this.currentDate || this.today).valueOf());
+    }
+    getToday() {
+        return new Date(this.today.valueOf());
     }
 }
 

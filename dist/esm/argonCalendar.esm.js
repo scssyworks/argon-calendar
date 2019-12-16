@@ -58,7 +58,6 @@ const CALENDARFOOTER_HTML = `<div class="calendar-footer">
 const DAYELEMENT_HTML = `<div class="calendar-day">{{day}}</div>`;
 const DATEELEMENT_HTML = `<button type="button" class="calendar-date">{{date}}</button>`;
 const MONTHELEMENT_HTML = `<div class="calendar-month">{{month}}</div>`;
-const YEARELEMENT_HTML = `<div class="calendar-year">{{year}}</div>`;
 const DAYS = [
     'Sunday',
     'Monday',
@@ -269,6 +268,13 @@ class Selector {
             });
         }
         return this;
+    }
+    outerHtml() {
+        let htmlString = '';
+        this.each(el => {
+            htmlString += el.outerHTML + '\n';
+        });
+        return htmlString;
     }
     append(text) {
         this.each((ref, i) => {
@@ -534,45 +540,71 @@ function daysInMonth(monthNumber, year) {
     }
 }
 
+function isToday(currentDate, referenceDate) {
+    return (
+        currentDate.getDate() === referenceDate.getDate()
+        && currentDate.getMonth() === referenceDate.getMonth()
+        && currentDate.getYear() === referenceDate.getYear()
+    );
+}
+
+function calendarWrap() {
+    return CALENDARWRAP_HTML;
+}
+
+function calendarRoot() {
+    return CALENDARROOT_HTML;
+}
+
+function calendarHeader() {
+    return CALENDARHEADER_HTML;
+}
+
+function calendarBodyRoot() {
+    return CALENDARBODYROOT_HTML;
+}
+
+function calendarFooter() {
+    return CALENDARFOOTER_HTML;
+}
+
+function dayElement(day) {
+    return repl(DAYELEMENT_HTML, { day });
+}
+
+function monthElement(month) {
+    return repl(MONTHELEMENT_HTML, { month });
+}
+
+function dateElement(date, current) {
+    if (isToday(this.today, current)) {
+        return $(repl(DATEELEMENT_HTML, { date })).addClass('is-today').outerHtml();
+    }
+    return repl(DATEELEMENT_HTML, { date });
+}
+
 class ArgonCalendar {
     constructor(config = {}) {
         this.config = Object.freeze($.extend({
             target: document.body,
             weekStartsFrom: 0,
             numberOfCalendars: 1,
-            calendarWrap() {
-                return CALENDARWRAP_HTML;
-            },
-            calendarRoot() {
-                return CALENDARROOT_HTML;
-            },
-            calendarHeader() {
-                return CALENDARHEADER_HTML;
-            },
-            calendarBodyRoot() {
-                return CALENDARBODYROOT_HTML;
-            },
-            calendarFooter() {
-                return CALENDARFOOTER_HTML;
-            },
-            dayElement(day) {
-                return repl(DAYELEMENT_HTML, { day });
-            },
-            monthElement(month) {
-                return repl(MONTHELEMENT_HTML, { month });
-            },
-            dateElement(date) {
-                return repl(DATEELEMENT_HTML, { date });
-            },
-            yearElement(year) {
-                return repl(YEARELEMENT_HTML, { year });
-            }
+            enableRange: false,
+            calendarWrap,
+            calendarRoot,
+            calendarHeader,
+            calendarBodyRoot,
+            calendarFooter,
+            dayElement,
+            monthElement,
+            dateElement
         }, config));
         if (this.config.weekStartsFrom >= 7 || this.config.weekStartsFrom < 0) {
             throw new Error(DAY_INDEX_ERROR);
         }
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
+        this.today = new Date();
         this.drawCalendar();
     }
     drawCalendar() {
@@ -650,11 +682,11 @@ class ArgonCalendar {
             for (let i = 0; i < startPadding; i++) {
                 const targetDate = current.getDate() - startPadding + i;
                 const prevDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
-                calDatesWrap.append($(this.config.dateElement(prevDate.getDate(), prevDate)).addClass('calendar-date-prev'));
+                calDatesWrap.append($(this.config.dateElement.apply(this, [prevDate.getDate(), prevDate])).addClass('calendar-date-prev'));
             }
             for (let i = 1; i <= totalDays; i++) {
                 current.setDate(i);
-                calDatesWrap.append(this.config.dateElement(i, current));
+                calDatesWrap.append(this.config.dateElement.apply(this, [i, current]));
             }
             let endPadding = DAYS.indexOf(this.daysTransformed[6]) - current.getDay();
             if (endPadding < 0) {
@@ -663,7 +695,7 @@ class ArgonCalendar {
             for (let i = 0; i < endPadding; i++) {
                 const targetDate = current.getDate() + i + 1;
                 const nextDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
-                calDatesWrap.append($(this.config.dateElement(nextDate.getDate(), nextDate)).addClass('calendar-date-next'));
+                calDatesWrap.append($(this.config.dateElement.apply(this, [nextDate.getDate(), nextDate])).addClass('calendar-date-next'));
             }
         } catch (e) {
             throw new Error(DATE_ELEMENT_ERROR);
@@ -684,6 +716,21 @@ class ArgonCalendar {
         const numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
         this.drawMonths(this.startMonthDate);
+    }
+    setDate(date) {
+        if (!this.config.enableRange) {
+            const current = date instanceof Date
+                ? new Date(date.valueOf()) :
+                new Date(...arguments);
+            this.currentDate = date instanceof Date ? date : new Date(...arguments);
+            this.drawMonths(current);
+        }
+    }
+    getDate() {
+        return new Date((this.currentDate || this.today).valueOf());
+    }
+    getToday() {
+        return new Date(this.today.valueOf());
     }
 }
 

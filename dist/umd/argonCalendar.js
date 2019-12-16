@@ -194,7 +194,6 @@
   var DAYELEMENT_HTML = "<div class=\"calendar-day\">{{day}}</div>";
   var DATEELEMENT_HTML = "<button type=\"button\" class=\"calendar-date\">{{date}}</button>";
   var MONTHELEMENT_HTML = "<div class=\"calendar-month\">{{month}}</div>";
-  var YEARELEMENT_HTML = "<div class=\"calendar-year\">{{year}}</div>";
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -421,6 +420,15 @@
         }
 
         return this;
+      }
+    }, {
+      key: "outerHtml",
+      value: function outerHtml() {
+        var htmlString = '';
+        this.each(function (el) {
+          htmlString += el.outerHTML + '\n';
+        });
+        return htmlString;
       }
     }, {
       key: "append",
@@ -805,6 +813,47 @@
     }
   }
 
+  function isToday(currentDate, referenceDate) {
+    return currentDate.getDate() === referenceDate.getDate() && currentDate.getMonth() === referenceDate.getMonth() && currentDate.getYear() === referenceDate.getYear();
+  }
+
+  function calendarWrap() {
+    return CALENDARWRAP_HTML;
+  }
+  function calendarRoot() {
+    return CALENDARROOT_HTML;
+  }
+  function calendarHeader() {
+    return CALENDARHEADER_HTML;
+  }
+  function calendarBodyRoot() {
+    return CALENDARBODYROOT_HTML;
+  }
+  function calendarFooter() {
+    return CALENDARFOOTER_HTML;
+  }
+  function dayElement(day) {
+    return repl(DAYELEMENT_HTML, {
+      day: day
+    });
+  }
+  function monthElement(month) {
+    return repl(MONTHELEMENT_HTML, {
+      month: month
+    });
+  }
+  function dateElement(date, current) {
+    if (isToday(this.today, current)) {
+      return $(repl(DATEELEMENT_HTML, {
+        date: date
+      })).addClass('is-today').outerHtml();
+    }
+
+    return repl(DATEELEMENT_HTML, {
+      date: date
+    });
+  }
+
   var ArgonCalendar =
   /*#__PURE__*/
   function () {
@@ -817,41 +866,15 @@
         target: document.body,
         weekStartsFrom: 0,
         numberOfCalendars: 1,
-        calendarWrap: function calendarWrap() {
-          return CALENDARWRAP_HTML;
-        },
-        calendarRoot: function calendarRoot() {
-          return CALENDARROOT_HTML;
-        },
-        calendarHeader: function calendarHeader() {
-          return CALENDARHEADER_HTML;
-        },
-        calendarBodyRoot: function calendarBodyRoot() {
-          return CALENDARBODYROOT_HTML;
-        },
-        calendarFooter: function calendarFooter() {
-          return CALENDARFOOTER_HTML;
-        },
-        dayElement: function dayElement(day) {
-          return repl(DAYELEMENT_HTML, {
-            day: day
-          });
-        },
-        monthElement: function monthElement(month) {
-          return repl(MONTHELEMENT_HTML, {
-            month: month
-          });
-        },
-        dateElement: function dateElement(date) {
-          return repl(DATEELEMENT_HTML, {
-            date: date
-          });
-        },
-        yearElement: function yearElement(year) {
-          return repl(YEARELEMENT_HTML, {
-            year: year
-          });
-        }
+        enableRange: false,
+        calendarWrap: calendarWrap,
+        calendarRoot: calendarRoot,
+        calendarHeader: calendarHeader,
+        calendarBodyRoot: calendarBodyRoot,
+        calendarFooter: calendarFooter,
+        dayElement: dayElement,
+        monthElement: monthElement,
+        dateElement: dateElement
       }, config));
 
       if (this.config.weekStartsFrom >= 7 || this.config.weekStartsFrom < 0) {
@@ -860,6 +883,7 @@
 
       this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
       this.monthsTransformed = MONTHS;
+      this.today = new Date();
       this.drawCalendar();
     }
 
@@ -963,12 +987,12 @@
           for (var i = 0; i < startPadding; i++) {
             var targetDate = current.getDate() - startPadding + i;
             var prevDate = new Date(current.getFullYear(), current.getMonth(), targetDate);
-            calDatesWrap.append($(this.config.dateElement(prevDate.getDate(), prevDate)).addClass('calendar-date-prev'));
+            calDatesWrap.append($(this.config.dateElement.apply(this, [prevDate.getDate(), prevDate])).addClass('calendar-date-prev'));
           }
 
           for (var _i = 1; _i <= totalDays; _i++) {
             current.setDate(_i);
-            calDatesWrap.append(this.config.dateElement(_i, current));
+            calDatesWrap.append(this.config.dateElement.apply(this, [_i, current]));
           }
 
           var endPadding = DAYS.indexOf(this.daysTransformed[6]) - current.getDay();
@@ -981,7 +1005,7 @@
             var _targetDate = current.getDate() + _i2 + 1;
 
             var nextDate = new Date(current.getFullYear(), current.getMonth(), _targetDate);
-            calDatesWrap.append($(this.config.dateElement(nextDate.getDate(), nextDate)).addClass('calendar-date-next'));
+            calDatesWrap.append($(this.config.dateElement.apply(this, [nextDate.getDate(), nextDate])).addClass('calendar-date-next'));
           }
         } catch (e) {
           throw new Error(DATE_ELEMENT_ERROR);
@@ -1010,6 +1034,25 @@
         var numberOfCalendars = +this.config.numberOfCalendars;
         this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
         this.drawMonths(this.startMonthDate);
+      }
+    }, {
+      key: "setDate",
+      value: function setDate(date) {
+        if (!this.config.enableRange) {
+          var current = date instanceof Date ? new Date(date.valueOf()) : _construct(Date, Array.prototype.slice.call(arguments));
+          this.currentDate = date instanceof Date ? date : _construct(Date, Array.prototype.slice.call(arguments));
+          this.drawMonths(current);
+        }
+      }
+    }, {
+      key: "getDate",
+      value: function getDate() {
+        return new Date((this.currentDate || this.today).valueOf());
+      }
+    }, {
+      key: "getToday",
+      value: function getToday() {
+        return new Date(this.today.valueOf());
       }
     }]);
 

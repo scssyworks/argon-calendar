@@ -196,6 +196,13 @@ class Selector {
         }
         return this;
     }
+    outerHtml() {
+        let htmlString = '';
+        this.each(el => {
+            htmlString += el.outerHTML + '\n';
+        });
+        return htmlString;
+    }
     append(text) {
         this.each((ref, i) => {
             const selectorRef = (new Selector(text, typeof text === 'string')).clone(i === 0);
