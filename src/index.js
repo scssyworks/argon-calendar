@@ -81,25 +81,27 @@ class ArgonCalendar {
             throw new Error(ROOT_ELEMENT_ERROR);
         }
     }
-    drawMonths() {
-        const current = new Date();
+    drawMonths(dateRef) {
+        this.calBody.empty();
+        const current = dateRef || (new Date());
         current.setDate(1);
+        this.startMonthDate = current;
         let index = 0;
         while (index < this.config.numberOfCalendars) {
-            const monthWrap = $('<div class="calendar-month"></div>');
+            const calMonth = $('<div class="calendar-month"></div>');
             try {
-                monthWrap.append(this.config.monthElement(this.monthsTransformed[current.getMonth()]));
+                calMonth.append(this.config.monthElement(this.monthsTransformed[current.getMonth()], current));
             } catch (e) {
                 throw new Error(MONTH_ELEMENT_ERROR);
             }
             try {
-                monthWrap.append(`<div class="calendar-days-wrap">${this.daysTransformed.map(this.config.dayElement).join('')}</div>`);
+                calMonth.append(`<div class="calendar-days-wrap">${this.daysTransformed.map(this.config.dayElement).join('')}</div>`);
             } catch (e) {
                 throw new Error(DAY_ELEMENT_ERROR);
             }
-            const calDatesWrap = $('<div class="calendar-dates"></div>');
-            monthWrap.append(calDatesWrap);
-            this.calBody.append(monthWrap);
+            const calDatesWrap = $('<div class="calendar-dates-wrap"></div>');
+            calMonth.append(calDatesWrap);
+            this.calBody.append(calMonth);
             this.drawDates(calDatesWrap, current);
             index += 1;
             current.setDate(1);
@@ -140,6 +142,16 @@ class ArgonCalendar {
         this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
         this.calTarget.unwrap();
         this.calRoot.remove();
+    }
+    next(skip = 1) {
+        const numberOfCalendars = +this.config.numberOfCalendars;
+        this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars + skip);
+        this.drawMonths(this.startMonthDate);
+    }
+    prev(skip = 1) {
+        const numberOfCalendars = +this.config.numberOfCalendars;
+        this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
+        this.drawMonths(this.startMonthDate);
     }
 }
 

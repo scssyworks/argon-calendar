@@ -917,29 +917,31 @@
       }
     }, {
       key: "drawMonths",
-      value: function drawMonths() {
-        var current = new Date();
+      value: function drawMonths(dateRef) {
+        this.calBody.empty();
+        var current = dateRef || new Date();
         current.setDate(1);
+        this.startMonthDate = current;
         var index = 0;
 
         while (index < this.config.numberOfCalendars) {
-          var monthWrap = $('<div class="calendar-month"></div>');
+          var calMonth = $('<div class="calendar-month"></div>');
 
           try {
-            monthWrap.append(this.config.monthElement(this.monthsTransformed[current.getMonth()]));
+            calMonth.append(this.config.monthElement(this.monthsTransformed[current.getMonth()], current));
           } catch (e) {
             throw new Error(MONTH_ELEMENT_ERROR);
           }
 
           try {
-            monthWrap.append("<div class=\"calendar-days-wrap\">".concat(this.daysTransformed.map(this.config.dayElement).join(''), "</div>"));
+            calMonth.append("<div class=\"calendar-days-wrap\">".concat(this.daysTransformed.map(this.config.dayElement).join(''), "</div>"));
           } catch (e) {
             throw new Error(DAY_ELEMENT_ERROR);
           }
 
-          var calDatesWrap = $('<div class="calendar-dates"></div>');
-          monthWrap.append(calDatesWrap);
-          this.calBody.append(monthWrap);
+          var calDatesWrap = $('<div class="calendar-dates-wrap"></div>');
+          calMonth.append(calDatesWrap);
+          this.calBody.append(calMonth);
           this.drawDates(calDatesWrap, current);
           index += 1;
           current.setDate(1);
@@ -992,6 +994,22 @@
         this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
         this.calTarget.unwrap();
         this.calRoot.remove();
+      }
+    }, {
+      key: "next",
+      value: function next() {
+        var skip = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var numberOfCalendars = +this.config.numberOfCalendars;
+        this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars + skip);
+        this.drawMonths(this.startMonthDate);
+      }
+    }, {
+      key: "prev",
+      value: function prev() {
+        var skip = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var numberOfCalendars = +this.config.numberOfCalendars;
+        this.startMonthDate.setMonth(this.startMonthDate.getMonth() - numberOfCalendars - skip);
+        this.drawMonths(this.startMonthDate);
       }
     }]);
 
