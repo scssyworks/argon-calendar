@@ -1,3 +1,6 @@
+// Selector
+export const WRAP_ERROR = 'Cannot wrap "undefined" element';
+// Calendar
 export const ACTIVE_CALENDAR_ERROR = 'There is an existing calendar on current element';
 export const WRAPPING_ELEMENT_ERROR = 'Function "calendarWrap" must return a valid HTML';
 export const ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root element HTML';

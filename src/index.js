@@ -45,36 +45,36 @@ class ArgonCalendar {
     }
     drawCalendar() {
         const config = this.config;
-        const currentTarget = $(config.target).first();
-        if (currentTarget.data('calendarActive')) {
+        this.currentTarget = $(config.target).first();
+        if (this.currentTarget.data('calendarActive')) {
             throw new Error(ACTIVE_CALENDAR_ERROR);
         }
-        let calendarTarget = currentTarget;
-        currentTarget.data('calendarActive', true);
-        if (currentTarget[0].nodeName === 'INPUT') {
+        this.calTarget = this.currentTarget;
+        this.currentTarget.data('calendarActive', true);
+        if (this.currentTarget[0].nodeName === 'INPUT') {
             try {
-                calendarTarget = currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
-                currentTarget.addClass('calendar-input');
-                if (calendarTarget.length === 0) {
+                this.calTarget = this.currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
+                this.currentTarget.addClass('calendar-input');
+                if (this.calTarget.length === 0) {
                     throw new Error(WRAPPING_ELEMENT_ERROR);
                 }
             } catch (e) {
                 throw new Error(e.message);
             }
         }
-        const calRoot = $(config.calendarRoot());
-        if (calRoot.length) {
-            calendarTarget.append(calRoot.addClass('calendar-root'));
+        this.calRoot = $(config.calendarRoot());
+        if (this.calRoot.length) {
+            this.calTarget.append(this.calRoot.addClass('calendar-root'));
             if (config.showHeader) {
-                calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
+                this.calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
             }
             this.calBody = $(config.calendarBodyRoot()).addClass('calendar-body-root');
             if (this.calBody.length === 0) {
                 throw new Error(BODY_ROOT_ELEMENT_ERROR);
             }
-            calRoot.append(this.calBody);
+            this.calRoot.append(this.calBody);
             if (config.showFooter) {
-                calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
+                this.calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
             }
             this.drawMonths();
         } else {
@@ -134,6 +134,12 @@ class ArgonCalendar {
         } catch (e) {
             throw new Error(DATE_ELEMENT_ERROR);
         }
+    }
+    // Public methods
+    destroy() {
+        this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
+        this.calTarget.unwrap();
+        this.calRoot.remove();
     }
 }
 

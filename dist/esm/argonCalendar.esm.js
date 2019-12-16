@@ -35,6 +35,54 @@ function assign() {
     return target;
 }
 
+// Selector
+const WRAP_ERROR = 'Cannot wrap "undefined" element';
+// Calendar
+const ACTIVE_CALENDAR_ERROR = 'There is an existing calendar on current element';
+const WRAPPING_ELEMENT_ERROR = 'Function "calendarWrap" must return a valid HTML';
+const ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root element HTML';
+const BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
+const DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
+const MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
+const DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
+const DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
+const CALENDARWRAP_HTML = `<div class="calendar-wrap"></div>`;
+const CALENDARROOT_HTML = `<div class="calendar-root"></div>`;
+const CALENDARHEADER_HTML = `<div class="calendar-header">
+    This is a placeholder header. Use "calendarHeader()" method to customise calendar header
+</div>`;
+const CALENDARBODYROOT_HTML = `<div class="calendar-body-root"></div>`;
+const CALENDARFOOTER_HTML = `<div class="calendar-footer">
+    This is a placeholder footer. Use "calendarFooter()" method to customise calendar footer
+</div>`;
+const DAYELEMENT_HTML = `<div class="calendar-day">{{day}}</div>`;
+const DATEELEMENT_HTML = `<button type="button" class="calendar-date">{{date}}</button>`;
+const MONTHELEMENT_HTML = `<div class="calendar-month">{{month}}</div>`;
+const YEARELEMENT_HTML = `<div class="calendar-year">{{year}}</div>`;
+const DAYS = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+];
+const MONTHS = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+];
+
 // Polyfill array includes
 if (!Array.prototype.includes) {
     Array.prototype.includes = function (item) {
@@ -334,6 +382,7 @@ class Selector {
     attr(key, value) {
         if (arguments.length === 1) {
             if (typeof key === 'string') {
+                if (!this[0]) return;
                 return restoreData(this[0].getAttribute(key));
             }
             if (key && typeof key === 'object') {
@@ -346,6 +395,12 @@ class Selector {
         if (arguments.length === 2 && typeof key === 'string') {
             this[0].setAttribute(hiphenate(key), resolveData(value));
         }
+        return this;
+    }
+    removeAttr(key) {
+        this.each(el => {
+            el.removeAttribute(key);
+        });
         return this;
     }
     add(selector) {
@@ -361,6 +416,9 @@ class Selector {
         return this.html('');
     }
     wrap(containerHtml) {
+        if (!this.length) {
+            throw new TypeError(WRAP_ERROR);
+        }
         const container = new WrapSelector(containerHtml);
         const thisParent = new Selector(this[0].parentNode);
         thisParent.prepend(container);
@@ -384,7 +442,7 @@ class Selector {
         return this;
     }
     hasClass(classString) {
-        if (typeof classString === 'string') {
+        if (this.length && typeof classString === 'string') {
             return this[0].classList.contains(classString);
         }
         return false;
@@ -392,30 +450,45 @@ class Selector {
     first() {
         return new Selector(this[0]);
     }
-}
-
-function isReady(callback) {
-    return ['complete', 'interactive'].includes(this.readyState()) && typeof callback === 'function';
-}
-
-class DocumentSelector extends Selector {
-    constructor(...args) {
-        super(...args);
+    remove() {
+        this.each(el => {
+            el.parentNode.removeChild(el);
+        });
     }
-    ready(callback) {
-        if (isReady.apply(this, [callback])) {
-            setTimeout(callback.bind(this[0]), 0);
+    after(selectorRef) {
+        const next = this.next().first();
+        if (next.length) {
+            next.before(selectorRef);
         } else {
-            this.on('DOMContentLoaded', () => {
-                if (isReady.apply(this, [callback])) {
-                    callback.apply(this[0]);
-                }
+            this.append(selectorRef);
+        }
+        return this;
+    }
+    before(selectorRef) {
+        if (this.length) {
+            (new Selector(selectorRef)).each(el => {
+                this[0].parentNode.insertBefore(el, this[0]);
             });
         }
         return this;
     }
-    readyState() {
-        return this[0].readyState;
+    next() {
+        const newSelectorRef = new Selector();
+        this.each(el => {
+            if (el.nextSibling) {
+                newSelectorRef.add(el.nextSibling);
+            }
+        });
+        return newSelectorRef;
+    }
+    prev() {
+        const newSelectorRef = new Selector();
+        this.each(el => {
+            if (el.previousSibling) {
+                newSelectorRef.add(el.previousSibling);
+            }
+        });
+        return newSelectorRef;
     }
 }
 
@@ -424,71 +497,19 @@ class WrapSelector extends Selector {
         super(...args);
     }
     unwrap() {
-        return (new Selector(this[0].parentNode)).append(this.children());
+        const ref = (new Selector(this[0])).after(this.children());
+        this.remove();
+        return ref;
     }
 }
 
-function $() {
-    let args = Array.prototype.slice.call(arguments);
-    if (typeof args[0] === 'function') {
-        const callback = args[0];
-        args = [document];
-        return (new DocumentSelector(...args)).ready(callback);
-    }
-    if (arguments[0] === document) {
-        return new DocumentSelector(...args);
-    }
+function $(...args) {
     return new Selector(...args);
 }
 
 $.extend = function () {
     return assign.apply(this, arguments);
 };
-
-const ACTIVE_CALENDAR_ERROR = 'There is an existing calendar on current element';
-const WRAPPING_ELEMENT_ERROR = 'Function "calendarWrap" must return a valid HTML';
-const ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root element HTML';
-const BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
-const DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
-const MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
-const DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
-const DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
-const CALENDARWRAP_HTML = `<div class="calendar-wrap"></div>`;
-const CALENDARROOT_HTML = `<div class="calendar-root"></div>`;
-const CALENDARHEADER_HTML = `<div class="calendar-header">
-    This is a placeholder header. Use "calendarHeader()" method to customise calendar header
-</div>`;
-const CALENDARBODYROOT_HTML = `<div class="calendar-body-root"></div>`;
-const CALENDARFOOTER_HTML = `<div class="calendar-footer">
-    This is a placeholder footer. Use "calendarFooter()" method to customise calendar footer
-</div>`;
-const DAYELEMENT_HTML = `<div class="calendar-day">{{day}}</div>`;
-const DATEELEMENT_HTML = `<button type="button" class="calendar-date">{{date}}</button>`;
-const MONTHELEMENT_HTML = `<div class="calendar-month">{{month}}</div>`;
-const YEARELEMENT_HTML = `<div class="calendar-year">{{year}}</div>`;
-const DAYS = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-];
-const MONTHS = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-];
 
 function repl(str, keyMap) {
     Object.keys(keyMap).forEach(key => {
@@ -556,36 +577,36 @@ class ArgonCalendar {
     }
     drawCalendar() {
         const config = this.config;
-        const currentTarget = $(config.target).first();
-        if (currentTarget.data('calendarActive')) {
+        this.currentTarget = $(config.target).first();
+        if (this.currentTarget.data('calendarActive')) {
             throw new Error(ACTIVE_CALENDAR_ERROR);
         }
-        let calendarTarget = currentTarget;
-        currentTarget.data('calendarActive', true);
-        if (currentTarget[0].nodeName === 'INPUT') {
+        this.calTarget = this.currentTarget;
+        this.currentTarget.data('calendarActive', true);
+        if (this.currentTarget[0].nodeName === 'INPUT') {
             try {
-                calendarTarget = currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
-                currentTarget.addClass('calendar-input');
-                if (calendarTarget.length === 0) {
+                this.calTarget = this.currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
+                this.currentTarget.addClass('calendar-input');
+                if (this.calTarget.length === 0) {
                     throw new Error(WRAPPING_ELEMENT_ERROR);
                 }
             } catch (e) {
                 throw new Error(e.message);
             }
         }
-        const calRoot = $(config.calendarRoot());
-        if (calRoot.length) {
-            calendarTarget.append(calRoot.addClass('calendar-root'));
+        this.calRoot = $(config.calendarRoot());
+        if (this.calRoot.length) {
+            this.calTarget.append(this.calRoot.addClass('calendar-root'));
             if (config.showHeader) {
-                calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
+                this.calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
             }
             this.calBody = $(config.calendarBodyRoot()).addClass('calendar-body-root');
             if (this.calBody.length === 0) {
                 throw new Error(BODY_ROOT_ELEMENT_ERROR);
             }
-            calRoot.append(this.calBody);
+            this.calRoot.append(this.calBody);
             if (config.showFooter) {
-                calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
+                this.calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
             }
             this.drawMonths();
         } else {
@@ -645,6 +666,12 @@ class ArgonCalendar {
         } catch (e) {
             throw new Error(DATE_ELEMENT_ERROR);
         }
+    }
+    // Public methods
+    destroy() {
+        this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
+        this.calTarget.unwrap();
+        this.calRoot.remove();
     }
 }
 

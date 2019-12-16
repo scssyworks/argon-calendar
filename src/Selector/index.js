@@ -1,4 +1,5 @@
 import { assign } from '../Assign';
+import { WRAP_ERROR } from '../Constants';
 
 // Polyfill array includes
 if (!Array.prototype.includes) {
@@ -307,6 +308,7 @@ class Selector {
     attr(key, value) {
         if (arguments.length === 1) {
             if (typeof key === 'string') {
+                if (!this[0]) return;
                 return restoreData(this[0].getAttribute(key));
             }
             if (key && typeof key === 'object') {
@@ -319,6 +321,12 @@ class Selector {
         if (arguments.length === 2 && typeof key === 'string') {
             this[0].setAttribute(hiphenate(key), resolveData(value));
         }
+        return this;
+    }
+    removeAttr(key) {
+        this.each(el => {
+            el.removeAttribute(key);
+        });
         return this;
     }
     add(selector) {
@@ -334,6 +342,9 @@ class Selector {
         return this.html('');
     }
     wrap(containerHtml) {
+        if (!this.length) {
+            throw new TypeError(WRAP_ERROR);
+        }
         const container = new WrapSelector(containerHtml);
         const thisParent = new Selector(this[0].parentNode);
         thisParent.prepend(container);
@@ -357,7 +368,7 @@ class Selector {
         return this;
     }
     hasClass(classString) {
-        if (typeof classString === 'string') {
+        if (this.length && typeof classString === 'string') {
             return this[0].classList.contains(classString);
         }
         return false;
@@ -365,30 +376,45 @@ class Selector {
     first() {
         return new Selector(this[0]);
     }
-}
-
-function isReady(callback) {
-    return ['complete', 'interactive'].includes(this.readyState()) && typeof callback === 'function';
-}
-
-class DocumentSelector extends Selector {
-    constructor(...args) {
-        super(...args);
+    remove() {
+        this.each(el => {
+            el.parentNode.removeChild(el);
+        });
     }
-    ready(callback) {
-        if (isReady.apply(this, [callback])) {
-            setTimeout(callback.bind(this[0]), 0);
+    after(selectorRef) {
+        const next = this.next().first();
+        if (next.length) {
+            next.before(selectorRef);
         } else {
-            this.on('DOMContentLoaded', () => {
-                if (isReady.apply(this, [callback])) {
-                    callback.apply(this[0]);
-                }
+            this.append(selectorRef);
+        }
+        return this;
+    }
+    before(selectorRef) {
+        if (this.length) {
+            (new Selector(selectorRef)).each(el => {
+                this[0].parentNode.insertBefore(el, this[0]);
             });
         }
         return this;
     }
-    readyState() {
-        return this[0].readyState;
+    next() {
+        const newSelectorRef = new Selector();
+        this.each(el => {
+            if (el.nextSibling) {
+                newSelectorRef.add(el.nextSibling);
+            }
+        });
+        return newSelectorRef;
+    }
+    prev() {
+        const newSelectorRef = new Selector();
+        this.each(el => {
+            if (el.previousSibling) {
+                newSelectorRef.add(el.previousSibling);
+            }
+        });
+        return newSelectorRef;
     }
 }
 
@@ -397,20 +423,13 @@ class WrapSelector extends Selector {
         super(...args);
     }
     unwrap() {
-        return (new Selector(this[0].parentNode)).append(this.children());
+        const ref = (new Selector(this[0])).after(this.children());
+        this.remove();
+        return ref;
     }
 }
 
-function $() {
-    let args = Array.prototype.slice.call(arguments);
-    if (typeof args[0] === 'function') {
-        const callback = args[0];
-        args = [document];
-        return (new DocumentSelector(...args)).ready(callback);
-    }
-    if (arguments[0] === document) {
-        return new DocumentSelector(...args);
-    }
+function $(...args) {
     return new Selector(...args);
 }
 

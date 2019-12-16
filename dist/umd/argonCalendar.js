@@ -175,6 +175,29 @@
     return target;
   }
 
+  // Selector
+  var WRAP_ERROR = 'Cannot wrap "undefined" element'; // Calendar
+
+  var ACTIVE_CALENDAR_ERROR = 'There is an existing calendar on current element';
+  var WRAPPING_ELEMENT_ERROR = 'Function "calendarWrap" must return a valid HTML';
+  var ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root element HTML';
+  var BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
+  var DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
+  var MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
+  var DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
+  var DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
+  var CALENDARWRAP_HTML = "<div class=\"calendar-wrap\"></div>";
+  var CALENDARROOT_HTML = "<div class=\"calendar-root\"></div>";
+  var CALENDARHEADER_HTML = "<div class=\"calendar-header\">\n    This is a placeholder header. Use \"calendarHeader()\" method to customise calendar header\n</div>";
+  var CALENDARBODYROOT_HTML = "<div class=\"calendar-body-root\"></div>";
+  var CALENDARFOOTER_HTML = "<div class=\"calendar-footer\">\n    This is a placeholder footer. Use \"calendarFooter()\" method to customise calendar footer\n</div>";
+  var DAYELEMENT_HTML = "<div class=\"calendar-day\">{{day}}</div>";
+  var DATEELEMENT_HTML = "<button type=\"button\" class=\"calendar-date\">{{date}}</button>";
+  var MONTHELEMENT_HTML = "<div class=\"calendar-month\">{{month}}</div>";
+  var YEARELEMENT_HTML = "<div class=\"calendar-year\">{{year}}</div>";
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
   if (!Array.prototype.includes) {
     Array.prototype.includes = function (item) {
       return this.indexOf(item) > -1;
@@ -553,6 +576,7 @@
 
         if (arguments.length === 1) {
           if (typeof key === 'string') {
+            if (!this[0]) return;
             return restoreData(this[0].getAttribute(key));
           }
 
@@ -569,6 +593,14 @@
           this[0].setAttribute(hiphenate(key), resolveData(value));
         }
 
+        return this;
+      }
+    }, {
+      key: "removeAttr",
+      value: function removeAttr(key) {
+        this.each(function (el) {
+          el.removeAttribute(key);
+        });
         return this;
       }
     }, {
@@ -594,6 +626,10 @@
     }, {
       key: "wrap",
       value: function wrap(containerHtml) {
+        if (!this.length) {
+          throw new TypeError(WRAP_ERROR);
+        }
+
         var container = new WrapSelector(containerHtml);
         var thisParent = new Selector(this[0].parentNode);
         thisParent.prepend(container);
@@ -633,7 +669,7 @@
     }, {
       key: "hasClass",
       value: function hasClass(classString) {
-        if (typeof classString === 'string') {
+        if (this.length && typeof classString === 'string') {
           return this[0].classList.contains(classString);
         }
 
@@ -644,80 +680,89 @@
       value: function first() {
         return new Selector(this[0]);
       }
-    }]);
-
-    return Selector;
-  }();
-
-  function isReady(callback) {
-    return ['complete', 'interactive'].includes(this.readyState()) && typeof callback === 'function';
-  }
-
-  var DocumentSelector =
-  /*#__PURE__*/
-  function (_Selector) {
-    _inherits(DocumentSelector, _Selector);
-
-    function DocumentSelector() {
-      var _getPrototypeOf2;
-
-      _classCallCheck(this, DocumentSelector);
-
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+    }, {
+      key: "remove",
+      value: function remove() {
+        this.each(function (el) {
+          el.parentNode.removeChild(el);
+        });
       }
+    }, {
+      key: "after",
+      value: function after(selectorRef) {
+        var next = this.next().first();
 
-      return _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(DocumentSelector)).call.apply(_getPrototypeOf2, [this].concat(args)));
-    }
+        if (next.length) {
+          next.before(selectorRef);
+        } else {
+          this.append(selectorRef);
+        }
 
-    _createClass(DocumentSelector, [{
-      key: "ready",
-      value: function ready(callback) {
+        return this;
+      }
+    }, {
+      key: "before",
+      value: function before(selectorRef) {
         var _this3 = this;
 
-        if (isReady.apply(this, [callback])) {
-          setTimeout(callback.bind(this[0]), 0);
-        } else {
-          this.on('DOMContentLoaded', function () {
-            if (isReady.apply(_this3, [callback])) {
-              callback.apply(_this3[0]);
-            }
+        if (this.length) {
+          new Selector(selectorRef).each(function (el) {
+            _this3[0].parentNode.insertBefore(el, _this3[0]);
           });
         }
 
         return this;
       }
     }, {
-      key: "readyState",
-      value: function readyState() {
-        return this[0].readyState;
+      key: "next",
+      value: function next() {
+        var newSelectorRef = new Selector();
+        this.each(function (el) {
+          if (el.nextSibling) {
+            newSelectorRef.add(el.nextSibling);
+          }
+        });
+        return newSelectorRef;
+      }
+    }, {
+      key: "prev",
+      value: function prev() {
+        var newSelectorRef = new Selector();
+        this.each(function (el) {
+          if (el.previousSibling) {
+            newSelectorRef.add(el.previousSibling);
+          }
+        });
+        return newSelectorRef;
       }
     }]);
 
-    return DocumentSelector;
-  }(Selector);
+    return Selector;
+  }();
 
   var WrapSelector =
   /*#__PURE__*/
-  function (_Selector2) {
-    _inherits(WrapSelector, _Selector2);
+  function (_Selector) {
+    _inherits(WrapSelector, _Selector);
 
     function WrapSelector() {
-      var _getPrototypeOf3;
+      var _getPrototypeOf2;
 
       _classCallCheck(this, WrapSelector);
 
-      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
       }
 
-      return _possibleConstructorReturn(this, (_getPrototypeOf3 = _getPrototypeOf(WrapSelector)).call.apply(_getPrototypeOf3, [this].concat(args)));
+      return _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(WrapSelector)).call.apply(_getPrototypeOf2, [this].concat(args)));
     }
 
     _createClass(WrapSelector, [{
       key: "unwrap",
       value: function unwrap() {
-        return new Selector(this[0].parentNode).append(this.children());
+        var ref = new Selector(this[0]).after(this.children());
+        this.remove();
+        return ref;
       }
     }]);
 
@@ -725,44 +770,16 @@
   }(Selector);
 
   function $() {
-    var args = Array.prototype.slice.call(arguments);
-
-    if (typeof args[0] === 'function') {
-      var callback = args[0];
-      args = [document];
-      return _construct(DocumentSelector, _toConsumableArray(args)).ready(callback);
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
     }
 
-    if (arguments[0] === document) {
-      return _construct(DocumentSelector, _toConsumableArray(args));
-    }
-
-    return _construct(Selector, _toConsumableArray(args));
+    return _construct(Selector, args);
   }
 
   $.extend = function () {
     return assign.apply(this, arguments);
   };
-
-  var ACTIVE_CALENDAR_ERROR = 'There is an existing calendar on current element';
-  var WRAPPING_ELEMENT_ERROR = 'Function "calendarWrap" must return a valid HTML';
-  var ROOT_ELEMENT_ERROR = 'Function "calendarRoot" must return a valid root element HTML';
-  var BODY_ROOT_ELEMENT_ERROR = 'Function "calendarBodyRoot" must return a valid body root element HTML to render calendar correctly';
-  var DAY_ELEMENT_ERROR = 'Function "dayElement" must return a valid day element HTML';
-  var MONTH_ELEMENT_ERROR = 'Function "monthElement" must return a valid month element HTML';
-  var DATE_ELEMENT_ERROR = 'Function "dateElement" must return a valid date element HTML';
-  var DAY_INDEX_ERROR = 'Please select a day between [0,6] where 0 = "Sunday" and 6 = "Saturday"';
-  var CALENDARWRAP_HTML = "<div class=\"calendar-wrap\"></div>";
-  var CALENDARROOT_HTML = "<div class=\"calendar-root\"></div>";
-  var CALENDARHEADER_HTML = "<div class=\"calendar-header\">\n    This is a placeholder header. Use \"calendarHeader()\" method to customise calendar header\n</div>";
-  var CALENDARBODYROOT_HTML = "<div class=\"calendar-body-root\"></div>";
-  var CALENDARFOOTER_HTML = "<div class=\"calendar-footer\">\n    This is a placeholder footer. Use \"calendarFooter()\" method to customise calendar footer\n</div>";
-  var DAYELEMENT_HTML = "<div class=\"calendar-day\">{{day}}</div>";
-  var DATEELEMENT_HTML = "<button type=\"button\" class=\"calendar-date\">{{date}}</button>";
-  var MONTHELEMENT_HTML = "<div class=\"calendar-month\">{{month}}</div>";
-  var YEARELEMENT_HTML = "<div class=\"calendar-year\">{{year}}</div>";
-  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   function repl(str, keyMap) {
     Object.keys(keyMap).forEach(function (key) {
@@ -850,21 +867,21 @@
       key: "drawCalendar",
       value: function drawCalendar() {
         var config = this.config;
-        var currentTarget = $(config.target).first();
+        this.currentTarget = $(config.target).first();
 
-        if (currentTarget.data('calendarActive')) {
+        if (this.currentTarget.data('calendarActive')) {
           throw new Error(ACTIVE_CALENDAR_ERROR);
         }
 
-        var calendarTarget = currentTarget;
-        currentTarget.data('calendarActive', true);
+        this.calTarget = this.currentTarget;
+        this.currentTarget.data('calendarActive', true);
 
-        if (currentTarget[0].nodeName === 'INPUT') {
+        if (this.currentTarget[0].nodeName === 'INPUT') {
           try {
-            calendarTarget = currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
-            currentTarget.addClass('calendar-input');
+            this.calTarget = this.currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
+            this.currentTarget.addClass('calendar-input');
 
-            if (calendarTarget.length === 0) {
+            if (this.calTarget.length === 0) {
               throw new Error(WRAPPING_ELEMENT_ERROR);
             }
           } catch (e) {
@@ -872,13 +889,13 @@
           }
         }
 
-        var calRoot = $(config.calendarRoot());
+        this.calRoot = $(config.calendarRoot());
 
-        if (calRoot.length) {
-          calendarTarget.append(calRoot.addClass('calendar-root'));
+        if (this.calRoot.length) {
+          this.calTarget.append(this.calRoot.addClass('calendar-root'));
 
           if (config.showHeader) {
-            calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
+            this.calRoot.append($(config.calendarHeader()).addClass('calendar-header'));
           }
 
           this.calBody = $(config.calendarBodyRoot()).addClass('calendar-body-root');
@@ -887,10 +904,10 @@
             throw new Error(BODY_ROOT_ELEMENT_ERROR);
           }
 
-          calRoot.append(this.calBody);
+          this.calRoot.append(this.calBody);
 
           if (config.showFooter) {
-            calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
+            this.calRoot.append($(config.calendarFooter()).addClass('calendar-footer'));
           }
 
           this.drawMonths();
@@ -967,6 +984,14 @@
         } catch (e) {
           throw new Error(DATE_ELEMENT_ERROR);
         }
+      } // Public methods
+
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
+        this.calTarget.unwrap();
+        this.calRoot.remove();
       }
     }]);
 
