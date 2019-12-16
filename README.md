@@ -9,7 +9,7 @@ npm i argon-calendar
 
 # About
 
-Argon calendar is not a regular calendar plugin. It's a library (minimalistic and customizable) with a basic set of APIs to interface with a calendar. It uses native browser APIs under the hood. <br>
+Argon calendar is not a regular calendar plugin. It's a a minimalistic and customizable library with a basic set of APIs. It uses native browser APIs under the hood. <br>
 If you are looking to build your own calendar plugin, this is the place where you start. <br>
 
 # How does it work?
@@ -26,20 +26,18 @@ const calendar = new ArgonCalendar({
     rangeSelection: false, // Default: false. If "true" then range selection is enabled. [optional]
     showHeader: true, // Enable calendar header. [optional]
     showFooter: true, // Enable calendar footer. [optional]
-    calendarWrap() { ... }, // Return HTML for input wrapper element. Works only for "input" target. [optional]
-    calendarRoot() { ... }, // Return HTML for calendar top level element. [optional]
-    calendarHeader() { ... }, // Return HTML for calendar header. [optional]
-    calendarFooter() { ... }, // Return HTML for calendar footer. [optional]
-    calendarBodyRoot() { ... }, // Return root element HTML for calendar body. Calendar body contains the HTML for calendar months. [optional]
-    dayElement(day) { ... }, // Customize day element HTML (Monday, Tuesday, Wednesday, etc.). [optional]
-    dateElement(dateString, dateObject) { ... }, // Customize date element HTML. [optional]
-    monthElement(monthString, dateObject) { ... } // Customize month element HTML. [optional]
+    calendarWrap() { ... }, // To wrap current input element. Works only for "input" as a target. [optional]
+    calendarRoot() { ... }, // Customize calendar top level element. [optional]
+    calendarHeader() { ... }, // Customize calendar header. [optional]
+    calendarFooter() { ... }, // Customize calendar footer. [optional]
+    calendarBodyRoot() { ... }, // Customize calendar body element. [optional]
+    dayElement(day) { ... }, // Customize day element (Monday, Tuesday, Wednesday, etc.). [optional]
+    dateElement(dateString, dateObject) { ... }, // Customize date element. [optional]
+    monthElement(monthString, dateObject) { ... } // Customize month element. [optional]
 });
 ```
 
 ## Navigate forward or backward
-
-You can load previous or next months using ``prev`` and ``next``.
 
 ```js
 calendar.prev(1 /* Optional skip parameter */); // Loads previous month(s). Optional "skip" parameter specifies how many months should be skipped.
@@ -65,17 +63,17 @@ calendar
     .jumpTo(/* Date object representing first month in the view */); // You should call this method to re-render months and diplay date range
 ```
 
-## Get current date set using "setDate" method
+## Get current date
 
 ```js
-const currentDate = calendar.getDate(); // Works only if "rangeSelection" is turned off.
+const currentDate = calendar.getDate(); // Works if "rangeSelection" is turned off.
 ```
 
-## Get date range set using "setStartDate" and "setEndDate" methods
+## Get date range
 
 ```js
-const startDate = calendar.getStartDate(); // Works only if "rangeSelection" is turned on.
-const endDate = calendar.getEndDate(); //  Works only if "rangeSelection" is turned on.
+const startDate = calendar.getStartDate(); // Works if "rangeSelection" is turned on.
+const endDate = calendar.getEndDate(); //  Works if "rangeSelection" is turned on.
 ```
 
 ## Get today's date
@@ -84,18 +82,20 @@ const endDate = calendar.getEndDate(); //  Works only if "rangeSelection" is tur
 const today = calendar.getToday();
 ```
 
-## Destroy the calendar
+## Destroy calendar
 
 ```js
 calendar.destroy();
 ```
 
-# Just an FYI !!!
+## Important!
 
-Argon calendar does not: <br>
-1. Automatically populate input fields.<br>
-2. Implement events to select date or date range.<br>
-3. Provide a month or year view yet (very common is calendar plugins these days). <br>
+Argon calendar does not support (and probably will never support) following features: <br>
+1. Range selection by clicking date elements <br>
+2. Automatically populate input fields <br>
+3. Display calendar as a popup <br>
+
+Please note that argon calendar does not assume how your calendar component should behave or look like. It provides a set of APIs which are crucial for a a calendar plugin to work. The plugin part is what you need to build yourself.
 
 # Your contribution
 
