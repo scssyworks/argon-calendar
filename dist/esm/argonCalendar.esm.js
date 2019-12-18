@@ -513,10 +513,12 @@ class ArgonCalendar {
         }
         this.calTarget = this.currentTarget;
         this.currentTarget.data('calendarActive', true);
-        if (this.currentTarget[0].nodeName === 'INPUT') {
+        const isCurrentTargetInput = this.currentTarget[0].nodeName === 'INPUT';
+        const wrapCurrentTarget = this.config.wrapTarget || isCurrentTargetInput;
+        if (wrapCurrentTarget) {
             try {
                 this.calTarget = this.currentTarget.wrap(config.calendarWrap()).addClass('calendar-wrap');
-                this.currentTarget.addClass('calendar-input');
+                this.currentTarget.addClass(isCurrentTargetInput ? 'calendar-input' : 'calendar-wrapped');
                 if (this.calTarget.length === 0) {
                     throw new Error(WRAPPING_ELEMENT_ERROR);
                 }
@@ -601,7 +603,7 @@ class ArgonCalendar {
     }
     // Public methods
     destroy() {
-        this.currentTarget.removeClass('calendar-input').removeAttr('data-calendar-active');
+        this.currentTarget.removeClass('calendar-input calendar-wrapped').removeAttr('data-calendar-active');
         if (this.calTarget.unwrap) {
             this.calTarget.unwrap();
         }

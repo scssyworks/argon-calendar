@@ -22,6 +22,7 @@ import ArgonCalendar from 'argon-calendar';
 const calendar = new ArgonCalendar({
     target: '#calendarTarget', // Target where calendar should be rendered. [mandatory]
     weekStartsFrom: 0, // Default: 0. 0 is Sunday, 1 is Monday, and so on... [optional]
+    wrapTarget: false, // True for input types. Wrap existing target and place calendar inside the wrapping element. [optional]
     numberOfCalendars: 2, // Default: 1. Number of months to be shown. [optional]
     rangeSelection: false, // Default: false. If "true" then range selection is enabled. [optional]
     showHeader: true, // Enable calendar header. [optional]
@@ -88,7 +89,7 @@ const today = calendar.getToday();
 calendar.destroy();
 ```
 
-## Important!
+# Important!
 
 Argon calendar does not support (and probably will never support) following features: <br>
 1. Range selection by clicking date elements <br>
