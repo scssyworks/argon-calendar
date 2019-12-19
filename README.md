@@ -1,5 +1,7 @@
 # Argon Calendar
-A customizable calendar component hackable to its core.
+A customizable calendar component hackable to its core.<br>
+
+[![Build Status](https://travis-ci.org/scssyworks/argon-calendar.svg?branch=master)](https://travis-ci.org/scssyworks/argon-calendar)
 
 # Install
 
