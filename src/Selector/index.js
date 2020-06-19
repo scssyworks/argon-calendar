@@ -62,6 +62,7 @@ export function hiphenate(str) {
 class Selector {
     constructor(selectorRef, createMode) {
         this.length = 0;
+        this.listeners = [];
         if (isValidSelector(selectorRef)) {
             if (typeof selectorRef === 'string') {
                 const isHTML = selectorRef.trim().charAt(0) === '<';
@@ -153,7 +154,7 @@ class Selector {
         }
         return new Selector(this.map(ref => ref.cloneNode(true)));
     }
-    map(callback) {
+    map(callback = ((el) => el)) {
         const returnArr = [];
         if (typeof callback === 'function') {
             this.each((ref, i) => {
@@ -290,6 +291,41 @@ class Selector {
             }
         });
         return newSelectorRef;
+    }
+    on(eventType, delegateSelector, callback, useCapture) {
+        if (typeof delegateSelector === 'function') {
+            useCapture = callback;
+            callback = delegateSelector;
+            delegateSelector = undefined;
+        }
+        this.each(el => {
+            const listener = (e) => {
+                if (delegateSelector) {
+                    const children = (new Selector(delegateSelector)).map();
+                    let selected = null;
+                    for (const node of children) {
+                        if (e.target.contains(node)) {
+                            selected = node;
+                            break;
+                        }
+                    }
+                    if (selected && typeof callback === 'function') {
+                        callback.apply(selected, [e]);
+                    }
+                } else if (typeof callback === 'function') {
+                    callback.apply(el, [e]);
+                }
+            };
+            this.listeners.push({ el, eventType, listener, useCapture });
+            el.addEventListener(eventType, listener, useCapture);
+        });
+        return this;
+    }
+    off() {
+        while (this.listeners.length > 0) {
+            const { el, eventType, listener, useCapture } = this.listeners.pop();
+            el.removeEventListener(eventType, listener, useCapture);
+        }
     }
 }
 

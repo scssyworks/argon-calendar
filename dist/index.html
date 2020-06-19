@@ -63,10 +63,6 @@
         .calendar-date.is-current-date {
             background: #6699cc;
         }
-        .calendar-date.is-selected {
-            color: #fff;
-            background-color: green;
-        }
         .calendar-date.calendar-date-prev,
         .calendar-date.calendar-date-next {
             background: transparent;
@@ -84,23 +80,7 @@
         let selectedDate = null;
         const cal = new ArgonCalendar({
             target: '#standaloneCalendar',
-            numberOfCalendars: 2,
-            dateElement(dateString, dateObject) {
-                const classes = ['calendar-date'];
-                if (this.isMatch(dateObject, new Date())) {
-                    classes.push('is-today');
-                }
-                if (selectedDate && this.isMatch(dateObject, selectedDate)) {
-                    classes.push('is-selected');
-                }
-                return `<button type="button" data-timestamp="${dateObject.getTime()}" class="${classes.join(' ')}">${dateString}</div>`;
-            }
-        });
-        document.querySelector('#standaloneCalendar').addEventListener('click', (e) => {
-            if (e.target.classList.contains('calendar-date')) {
-                selectedDate = new Date(+e.target.getAttribute('data-timestamp'));
-                cal.setDate(selectedDate);
-            }
+            numberOfCalendars: 2
         });
     </script>
 </body>

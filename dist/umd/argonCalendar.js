@@ -171,6 +171,63 @@
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
+  function _createForOfIteratorHelper(o, allowArrayLike) {
+    var it;
+
+    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+        if (it) o = it;
+        var i = 0;
+
+        var F = function () {};
+
+        return {
+          s: F,
+          n: function () {
+            if (i >= o.length) return {
+              done: true
+            };
+            return {
+              done: false,
+              value: o[i++]
+            };
+          },
+          e: function (e) {
+            throw e;
+          },
+          f: F
+        };
+      }
+
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+
+    var normalCompletion = true,
+        didErr = false,
+        err;
+    return {
+      s: function () {
+        it = o[Symbol.iterator]();
+      },
+      n: function () {
+        var step = it.next();
+        normalCompletion = step.done;
+        return step;
+      },
+      e: function (e) {
+        didErr = true;
+        err = e;
+      },
+      f: function () {
+        try {
+          if (!normalCompletion && it.return != null) it.return();
+        } finally {
+          if (didErr) throw err;
+        }
+      }
+    };
+  }
+
   // Selector
   var WRAP_ERROR = 'Cannot wrap "undefined" element'; // Calendar
 
@@ -266,6 +323,7 @@
       _classCallCheck(this, Selector);
 
       this.length = 0;
+      this.listeners = [];
 
       if (isValidSelector(selectorRef)) {
         if (typeof selectorRef === 'string') {
@@ -389,7 +447,10 @@
       }
     }, {
       key: "map",
-      value: function map(callback) {
+      value: function map() {
+        var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : function (el) {
+          return el;
+        };
         var returnArr = [];
 
         if (typeof callback === 'function') {
@@ -591,6 +652,73 @@
         });
         return newSelectorRef;
       }
+    }, {
+      key: "on",
+      value: function on(eventType, delegateSelector, callback, useCapture) {
+        var _this4 = this;
+
+        if (typeof delegateSelector === 'function') {
+          useCapture = callback;
+          callback = delegateSelector;
+          delegateSelector = undefined;
+        }
+
+        this.each(function (el) {
+          var listener = function listener(e) {
+            if (delegateSelector) {
+              var children = new Selector(delegateSelector).map();
+              var selected = null;
+
+              var _iterator = _createForOfIteratorHelper(children),
+                  _step;
+
+              try {
+                for (_iterator.s(); !(_step = _iterator.n()).done;) {
+                  var node = _step.value;
+
+                  if (e.target.contains(node)) {
+                    selected = node;
+                    break;
+                  }
+                }
+              } catch (err) {
+                _iterator.e(err);
+              } finally {
+                _iterator.f();
+              }
+
+              if (selected && typeof callback === 'function') {
+                callback.apply(selected, [e]);
+              }
+            } else if (typeof callback === 'function') {
+              callback.apply(el, [e]);
+            }
+          };
+
+          _this4.listeners.push({
+            el: el,
+            eventType: eventType,
+            listener: listener,
+            useCapture: useCapture
+          });
+
+          el.addEventListener(eventType, listener, useCapture);
+        });
+        return this;
+      }
+    }, {
+      key: "off",
+      value: function off() {
+        while (this.listeners.length > 0) {
+          var _this$listeners$pop = this.listeners.pop(),
+              el = _this$listeners$pop.el,
+              eventType = _this$listeners$pop.eventType,
+              listener = _this$listeners$pop.listener,
+              useCapture = _this$listeners$pop.useCapture;
+
+          el.removeEventListener(eventType, listener, useCapture);
+        }
+      }
     }]);
 
     return Selector;
@@ -693,6 +821,7 @@
     var dateEl = $(repl(DATEELEMENT_HTML, {
       date: date
     }));
+    dateEl.attr('data-timestamp', current.getTime());
 
     if (exact(this.today, current)) {
       dateEl.addClass('is-today');
@@ -758,6 +887,8 @@
 
   var ArgonCalendar = /*#__PURE__*/function () {
     function ArgonCalendar() {
+      var _this = this;
+
       var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
       _classCallCheck(this, ArgonCalendar);
@@ -784,8 +915,15 @@
       this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
       this.monthsTransformed = MONTHS;
       this.today = new Date();
+      this.boudingElement = $(this.config.target);
 
       this._drawCalendar();
+
+      this.boudingElement.on('mousedown', '.calendar-date', function (e) {
+        var timestamp = $(e.target).data('timestamp');
+
+        _this.setDate(new Date(timestamp));
+      });
     }
 
     _createClass(ArgonCalendar, [{
@@ -920,6 +1058,7 @@
     }, {
       key: "destroy",
       value: function destroy() {
+        this.boudingElement.off();
         this.currentTarget.removeClass('calendar-input calendar-wrapped').removeAttr('data-calendar-active');
 
         if (this.calTarget.unwrap) {

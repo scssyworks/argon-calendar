@@ -54,6 +54,7 @@ export function monthElement(month) {
 
 export function dateElement(date, current) {
     const dateEl = $(repl(DATEELEMENT_HTML, { date }));
+    dateEl.attr('data-timestamp', current.getTime());
     if (exact(this.today, current)) {
         dateEl.addClass('is-today');
     }

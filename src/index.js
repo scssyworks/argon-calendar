@@ -50,7 +50,12 @@ export default class ArgonCalendar {
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
         this.today = new Date();
+        this.boudingElement = $(this.config.target);
         this._drawCalendar();
+        this.boudingElement.on('mousedown', '.calendar-date', (e) => {
+            const timestamp = $(e.target).data('timestamp');
+            this.setDate(new Date(timestamp));
+        });
     }
     _drawCalendar() {
         const config = this.config;
@@ -150,6 +155,7 @@ export default class ArgonCalendar {
     }
     // Public methods
     destroy() {
+        this.boudingElement.off();
         this.currentTarget.removeClass('calendar-input calendar-wrapped').removeAttr('data-calendar-active');
         if (this.calTarget.unwrap) {
             this.calTarget.unwrap();
