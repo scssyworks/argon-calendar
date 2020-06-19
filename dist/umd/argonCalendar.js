@@ -898,6 +898,7 @@
         weekStartsFrom: 0,
         numberOfCalendars: 1,
         rangeSelection: false,
+        defaultEvents: true,
         calendarWrap: calendarWrap,
         calendarRoot: calendarRoot,
         calendarHeader: calendarHeader,
@@ -915,15 +916,45 @@
       this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
       this.monthsTransformed = MONTHS;
       this.today = new Date();
-      this.boudingElement = $(this.config.target);
 
       this._drawCalendar();
 
-      this.boudingElement.on('mousedown', '.calendar-date', function (e) {
-        var timestamp = $(e.target).data('timestamp');
+      if (this.config.defaultEvents) {
+        this.boundingElement = $(this.config.target);
+        this.boundingElement.on('mousedown', '.calendar-date', function (e) {
+          var timestamp = $(e.target).data('timestamp');
+          var _this$config = _this.config,
+              onSelectionStart = _this$config.onSelectionStart,
+              onSelectionEnd = _this$config.onSelectionEnd;
 
-        _this.setDate(new Date(timestamp));
-      });
+          if (_this.config.rangeSelection) {
+            if (!_this.selectionStarted) {
+              _this.selectionStarted = true;
+              var startDate = new Date(timestamp);
+
+              _this.setStartDate(startDate).jumpTo(startDate);
+
+              if (typeof onSelectionStart === 'function') {
+                onSelectionStart.apply(_this);
+              }
+            } else {
+              var endDate = new Date(timestamp);
+
+              _this.setEndDate(endDate).jumpTo(endDate);
+
+              delete _this.selectionStarted;
+            }
+          } else {
+            var date = new Date(timestamp);
+
+            _this.setDate(date);
+          }
+
+          if (typeof onSelectionEnd === 'function') {
+            onSelectionEnd.apply(_this);
+          }
+        });
+      }
     }
 
     _createClass(ArgonCalendar, [{
@@ -990,7 +1021,7 @@
         var index = 0;
 
         while (index < this.config.numberOfCalendars) {
-          var calMonth = $('<div class="calendar-month"></div>');
+          var calMonth = $('<div class="calendar-month-wrap"></div>');
 
           try {
             calMonth.append(this.config.monthElement(this.monthsTransformed[current.getMonth()], current));
@@ -1058,7 +1089,10 @@
     }, {
       key: "destroy",
       value: function destroy() {
-        this.boudingElement.off();
+        if (this.config.defaultEvents) {
+          this.boundingElement.off();
+        }
+
         this.currentTarget.removeClass('calendar-input calendar-wrapped').removeAttr('data-calendar-active');
 
         if (this.calTarget.unwrap) {

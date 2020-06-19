@@ -35,6 +35,7 @@ export default class ArgonCalendar {
             weekStartsFrom: 0,
             numberOfCalendars: 1,
             rangeSelection: false,
+            defaultEvents: true,
             calendarWrap,
             calendarRoot,
             calendarHeader,
@@ -50,12 +51,36 @@ export default class ArgonCalendar {
         this.daysTransformed = DAYS.slice(this.config.weekStartsFrom).concat(DAYS.slice(0, this.config.weekStartsFrom));
         this.monthsTransformed = MONTHS;
         this.today = new Date();
-        this.boudingElement = $(this.config.target);
         this._drawCalendar();
-        this.boudingElement.on('mousedown', '.calendar-date', (e) => {
-            const timestamp = $(e.target).data('timestamp');
-            this.setDate(new Date(timestamp));
-        });
+        if (this.config.defaultEvents) {
+            this.boundingElement = $(this.config.target);
+            this.boundingElement.on('mousedown', '.calendar-date', (e) => {
+                const timestamp = $(e.target).data('timestamp');
+                const { onSelectionStart, onSelectionEnd } = this.config;
+                if (this.config.rangeSelection) {
+                    if (!this.selectionStarted) {
+                        this.selectionStarted = true;
+                        const startDate = new Date(timestamp);
+                        this.setStartDate(startDate)
+                            .jumpTo(startDate);
+                        if (typeof onSelectionStart === 'function') {
+                            onSelectionStart.apply(this);
+                        }
+                    } else {
+                        const endDate = new Date(timestamp);
+                        this.setEndDate(endDate)
+                            .jumpTo(endDate);
+                        delete this.selectionStarted;
+                    }
+                } else {
+                    const date = new Date(timestamp);
+                    this.setDate(date);
+                }
+                if (typeof onSelectionEnd === 'function') {
+                    onSelectionEnd.apply(this);
+                }
+            });
+        }
     }
     _drawCalendar() {
         const config = this.config;
@@ -104,7 +129,7 @@ export default class ArgonCalendar {
         this.startMonthDate = current;
         let index = 0;
         while (index < this.config.numberOfCalendars) {
-            const calMonth = $('<div class="calendar-month"></div>');
+            const calMonth = $('<div class="calendar-month-wrap"></div>');
             try {
                 calMonth.append(this.config.monthElement(this.monthsTransformed[current.getMonth()], current));
             } catch (e) {
@@ -155,7 +180,9 @@ export default class ArgonCalendar {
     }
     // Public methods
     destroy() {
-        this.boudingElement.off();
+        if (this.config.defaultEvents) {
+            this.boundingElement.off();
+        }
         this.currentTarget.removeClass('calendar-input calendar-wrapped').removeAttr('data-calendar-active');
         if (this.calTarget.unwrap) {
             this.calTarget.unwrap();

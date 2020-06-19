@@ -8,11 +8,14 @@ declare interface ArgonCalendarConstructorOptions {
     dayElement(day: string): string;
     dateElement(dateString: string, dateObject: Date): string;
     monthElement(monthString: string, dateObject: Date): string;
+    onSelectionStart(): void;
+    onSelectionEnd(): void;
     weekStartsFrom?: number;
     numberOfCalendars?: number;
     rangeSelection?: boolean;
     showHeader?: boolean;
     showFooter?: boolean;
+    defaultEvents?: boolean;
 }
 
 declare class ArgonCalendar {

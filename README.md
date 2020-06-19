@@ -11,7 +11,7 @@ npm i argon-calendar
 
 # About
 
-Argon calendar is not a regular calendar plugin. It's a a minimalistic and customizable library with a basic set of APIs. It uses native browser APIs under the hood. <br>
+Argon calendar is a minimalistic calendar plugin designed for customization. Argon calendar provides a bare minimum library which can be configured or tweaked according to various project needs. <br>
 If you are looking to build your own calendar plugin, this is the place where you start. <br>
 
 # How does it work?
@@ -27,6 +27,7 @@ const calendar = new ArgonCalendar({
     wrapTarget: false, // True for input types. Wrap existing target and place calendar inside the wrapping element. [optional]
     numberOfCalendars: 2, // Default: 1. Number of months to be shown. [optional]
     rangeSelection: false, // Default: false. If "true" then range selection is enabled. [optional]
+    defaultEvents: true, // Default: true. Enables date selection events. You can turn this off if you want to implement those events yourself. [optional]
     showHeader: true, // Enable calendar header. [optional]
     showFooter: true, // Enable calendar footer. [optional]
     calendarWrap() { ... }, // To wrap current input element. Works only for "input" as a target. [optional]
@@ -36,7 +37,9 @@ const calendar = new ArgonCalendar({
     calendarBodyRoot() { ... }, // Customize calendar body element. [optional]
     dayElement(day) { ... }, // Customize day element (Monday, Tuesday, Wednesday, etc.). [optional]
     dateElement(dateString, dateObject) { ... }, // Customize date element. [optional]
-    monthElement(monthString, dateObject) { ... } // Customize month element. [optional]
+    monthElement(monthString, dateObject) { ... }, // Customize month element. [optional]
+    onSelectionStart() { ... }, // Event handler for date range when selection is started. Works only if "defaultEvents" flag is true. [optional]
+    onSelectionEnd() { ... } // Event handler for date or date range selection is ended. Works only if "defaultEvents" flag is true. [optional]
 });
 ```
 
@@ -94,11 +97,10 @@ calendar.destroy();
 # Important!
 
 Argon calendar does not support (and probably will never support) following features: <br>
-1. Range selection by clicking date elements <br>
-2. Automatically populate input fields <br>
-3. Display calendar as a popup <br>
+1. Automatically populate input fields <br>
+2. Display calendar as a popup <br>
 
-Please note that argon calendar does not assume how your calendar component should behave or look like. It provides a set of APIs which are crucial for a a calendar plugin to work. The plugin part is what you need to build yourself.
+Please note that argon calendar completely customizable. It provides a set of APIs which can be used to create a calendar plugin.
 
 # Your contribution
 
