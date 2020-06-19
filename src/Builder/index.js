@@ -11,7 +11,7 @@ import {
 import { repl } from '../Utils';
 import { $ } from '../Selector';
 
-function exact(currentDate, referenceDate) {
+export function exact(currentDate, referenceDate) {
     return (
         currentDate.getDate() === referenceDate.getDate()
         && currentDate.getMonth() === referenceDate.getMonth()

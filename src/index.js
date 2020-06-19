@@ -22,7 +22,8 @@ import {
     calendarFooter,
     dayElement,
     monthElement,
-    dateElement
+    dateElement,
+    exact
 } from './Builder';
 import { daysInMonth } from './Utils';
 import { assign } from './Assign';
@@ -238,5 +239,8 @@ export default class ArgonCalendar {
                 : new Date(...arguments)
         ));
         return this;
+    }
+    isMatch() {
+        return exact.apply(this, arguments);
     }
 }

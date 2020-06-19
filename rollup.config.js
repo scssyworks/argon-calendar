@@ -18,7 +18,11 @@ const commonConfig = {
                 moduleDirectory: 'node_modules'
             }
         }),
-        commonjs()
+        commonjs(),
+        babel({
+            exclude: 'node_modules/**',
+            babelHelpers: 'bundled'
+        })
     ]
 };
 
@@ -47,10 +51,7 @@ umdConfig.output = Object.assign({}, commonConfig.output, {
     format: 'umd'
 });
 umdConfig.plugins = [
-    ...commonConfig.plugins,
-    babel({
-        exclude: 'node_modules/**'
-    })
+    ...commonConfig.plugins
 ];
 
 // Server mode

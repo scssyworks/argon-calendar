@@ -28,6 +28,7 @@ declare class ArgonCalendar {
     getToday(): Date;
     getStartDate(): Date;
     getEndDate(): Date;
+    isMatch(date: Date, compareDate: Date): boolean;
 }
 
 export default ArgonCalendar;

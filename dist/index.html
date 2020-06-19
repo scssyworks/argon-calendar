@@ -20,28 +20,31 @@
             clear: both;
         }
         .calendar-days-wrap,
-        .calendar-dates-wrap {
-            max-width: 850px;
+        .calendar-dates-wrap,
+        .calendar-month {
+            max-width: 350px;
+        }
+        .calendar-month {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 16px 0;
         }
         .calendar-day {
-            width: 120px;
+            width: 50px;
             padding: 10px 5px;
             float: left;
             text-align: center;
+            font-size: 8px;
         }
         .calendar-date {
-            width: 120px;
+            width: 50px;
             border: 0;
             padding: 10px 5px;
             background: #eee;
             border: 1px solid #fff;
             float: left;
             font-size: 16px;
-        }
-        .calendar-date.calendar-date-prev,
-        .calendar-date.calendar-date-next {
-            background: transparent;
-            color: #999;
         }
         .calendar-date.is-today {
             font-weight: bold;
@@ -60,6 +63,15 @@
         .calendar-date.is-current-date {
             background: #6699cc;
         }
+        .calendar-date.is-selected {
+            color: #fff;
+            background-color: green;
+        }
+        .calendar-date.calendar-date-prev,
+        .calendar-date.calendar-date-next {
+            background: transparent;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -67,5 +79,29 @@
     <div id="standaloneCalendar">Placeholder DIV</div>
     <script type="module" src="esm/argonCalendar.esm.js"></script>
     <script nomodule src="umd/argonCalendar.js"></script>
+    <script type="module">
+        import ArgonCalendar from './esm/argonCalendar.esm.js';
+        let selectedDate = null;
+        const cal = new ArgonCalendar({
+            target: '#standaloneCalendar',
+            numberOfCalendars: 2,
+            dateElement(dateString, dateObject) {
+                const classes = ['calendar-date'];
+                if (this.isMatch(dateObject, new Date())) {
+                    classes.push('is-today');
+                }
+                if (selectedDate && this.isMatch(dateObject, selectedDate)) {
+                    classes.push('is-selected');
+                }
+                return `<button type="button" data-timestamp="${dateObject.getTime()}" class="${classes.join(' ')}">${dateString}</div>`;
+            }
+        });
+        document.querySelector('#standaloneCalendar').addEventListener('click', (e) => {
+            if (e.target.classList.contains('calendar-date')) {
+                selectedDate = new Date(+e.target.getAttribute('data-timestamp'));
+                cal.setDate(selectedDate);
+            }
+        });
+    </script>
 </body>
 </html>

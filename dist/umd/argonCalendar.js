@@ -1037,6 +1037,11 @@
 
         return this;
       }
+    }, {
+      key: "isMatch",
+      value: function isMatch() {
+        return exact.apply(this, arguments);
+      }
     }]);
 
     return ArgonCalendar;
