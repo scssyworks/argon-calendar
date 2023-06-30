@@ -1,53 +1,36 @@
 {
   "name": "argon-calendar",
   "version": "0.0.5",
-  "description": "A customizable calendar component hackable to its core.",
-  "main": "dist/umd/argonCalendar.js",
-  "module": "dist/esm/argonCalendar.esm.js",
-  "types": "typings/argonCalendar.d.ts",
+  "description": "A customizable calendar component for Core JS projects",
+  "main": "dist/umd/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/typings/src/index.d.ts",
   "scripts": {
-    "start": "rollup -c --watch --environment SERVE:true",
-    "build": "npm run test && rollup -c",
+    "typings": "tsc",
+    "build": "npm run typings && rollup-scripts build",
     "test": "jest plugin.test.js"
   },
   "author": "scssyworks",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.10.2",
-    "@babel/preset-env": "^7.10.2",
-    "@rollup/plugin-babel": "^5.0.3",
-    "@rollup/plugin-commonjs": "^13.0.0",
-    "@rollup/plugin-node-resolve": "^8.0.1",
-    "@types/jest": "^26.0.0",
-    "babel-eslint": "^10.1.0",
-    "jest": "^26.0.1",
-    "rollup": "^1.32.1",
-    "rollup-plugin-eslint": "^7.0.0",
-    "rollup-plugin-livereload": "^1.3.0",
-    "rollup-plugin-serve": "^1.0.1",
-    "rollup-plugin-terser": "^5.3.0"
+    "@types/jest": "^29.5.2",
+    "rollup-scripts": "0.0.94",
+    "rome": "^12.1.3"
   },
   "keywords": [
     "calendar",
-    "calendar-library",
-    "calendar-plugin",
-    "plugin-builder",
-    "argon-calendar",
     "argon",
     "date-picker",
     "date",
     "date-range",
     "range",
-    "range-selector",
-    "selector",
-    "time",
-    "events",
-    "hackable"
+    "range-selector"
   ],
   "files": [
     "dist/esm/",
     "dist/umd/",
-    "typings/"
+    "dist/typings/",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
@@ -56,5 +39,8 @@
   "bugs": {
     "url": "https://github.com/scssyworks/argon-calendar/issues"
   },
-  "homepage": "https://github.com/scssyworks/argon-calendar#readme"
+  "homepage": "https://github.com/scssyworks/argon-calendar#readme",
+  "dependencies": {
+    "argon-calendar-core": "^0.0.4"
+  }
 }

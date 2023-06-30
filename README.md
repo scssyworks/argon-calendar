@@ -1,7 +1,6 @@
 # Argon Calendar
-A customizable calendar component hackable to its core.<br>
 
-[![Build Status](https://travis-ci.org/scssyworks/argon-calendar.svg?branch=master)](https://travis-ci.org/scssyworks/argon-calendar)
+A customizable calendar component for Core JS projects
 
 # Install
 
@@ -11,8 +10,10 @@ npm i argon-calendar
 
 # About
 
-Argon calendar is not a regular calendar plugin. It's a a minimalistic and customizable library with a basic set of APIs. It uses native browser APIs under the hood. <br>
-If you are looking to build your own calendar plugin, this is the place where you start. <br>
+Argon calendar is a `core-js` library that uses
+[argon-calendar-core](https://github.com/scssyworks/argon-calendar-core) API to
+render calendar for regular JavaScript projects. It is designed to be intuitive
+and fully customizable.
 
 # How does it work?
 
@@ -49,7 +50,7 @@ calendar.next(1 /* Optional skip parameter */); // Loads next month(s). Optional
 
 ## Set a date
 
-A single date can be set if ``rangeSelection`` is turned off.
+A single date can be set if `rangeSelection` is turned off.
 
 ```js
 calendar.setDate(/* Date object OR valid Date constructor arguments */);
@@ -57,13 +58,16 @@ calendar.setDate(/* Date object OR valid Date constructor arguments */);
 
 ## Set a date range
 
-A date range can be set if ``rangeSelection`` is turned on.
+A date range can be set if `rangeSelection` is turned on.
 
 ```js
 calendar
-    .setStartDate(/* Date object OR valid Date constructor arguments */)
-    .setEndDate(/* Date object OR valid Date constructor arguments */) // These two methods will not re-render months
-    .jumpTo(/* Date object representing first month in the view */); // You should call this method to re-render months and diplay date range
+  .setStartDate()
+  /* Date object OR valid Date constructor arguments */
+  .setEndDate() // These two methods will not re-render months
+  /* Date object OR valid Date constructor arguments */ .jumpTo(
+    /* Date object representing first month in the view */
+  ); // You should call this method to re-render months and diplay date range
 ```
 
 ## Get current date
@@ -93,13 +97,19 @@ calendar.destroy();
 
 # Important!
 
-Argon calendar does not support (and probably will never support) following features: <br>
+Argon calendar does not support (and probably will never support) following
+features: <br>
+
 1. Range selection by clicking date elements <br>
 2. Automatically populate input fields <br>
 3. Display calendar as a popup <br>
 
-Please note that argon calendar does not assume how your calendar component should behave or look like. It provides a set of APIs which are crucial for a a calendar plugin to work. The plugin part is what you need to build yourself.
+Please note that argon calendar does not assume how your calendar component
+should behave or look like. It provides a set of APIs which are crucial for a a
+calendar plugin to work. The plugin part is what you need to build yourself.
 
 # Your contribution
 
-Argon calendar is a simple library, easy to understand and use. However, if you still face any issues, please feel free to log defects, provide suggestions or raise PRs. I would highly appreciate your contribution towards this project.
+Argon calendar is a simple library, easy to understand and use. However, if you
+still face any issues, please feel free to log defects, provide suggestions or
+raise PRs. I would highly appreciate your contribution towards this project.
