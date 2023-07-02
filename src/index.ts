@@ -1,27 +1,21 @@
+import { Calendar as CalendarCore } from 'argon-calendar-core';
+import { defaultHandler, wrapElement } from './Utils';
 import {
-  Calendar as CalendarCore,
-  CalendarConfig,
-  RenderedMonths
-} from 'argon-calendar-core';
-import { renderTemplate, wrapElement } from './Utils';
-import { TEMPLATE_PROPS, TemplateProps } from './Constants';
-
-export interface ArgonCalendarConfig extends CalendarConfig {
-  target: string;
-  wrapTarget?: boolean;
-  rangeSelection?: boolean;
-  showHeader?: boolean;
-  showFooter?: boolean;
-}
+  CALENDAR_ROOT,
+  ERR_HANDLER,
+  ERR_TARGET,
+  TEMPLATE_PROPS
+} from './Constants';
+import { ArgonCalendarConfig, CalConfig } from './Types';
 
 export default class Calendar {
   #target: Element | null = null;
   #calendar: CalendarCore;
-  #config: Omit<
-    ArgonCalendarConfig,
-    'visibleMonthCount' | 'visibleWeekCount' | 'weekStartsOn'
-  >;
-  constructor(config: Partial<ArgonCalendarConfig> = {}) {
+  #config: CalConfig;
+  constructor(
+    target = `#${CALENDAR_ROOT}`,
+    config: Partial<ArgonCalendarConfig> = {}
+  ) {
     const { visibleMonthCount, visibleWeekCount, weekStartsOn, ...restConfig } =
       config;
     this.#calendar = new CalendarCore({
@@ -29,15 +23,8 @@ export default class Calendar {
       visibleWeekCount,
       weekStartsOn
     });
-    this.#config = Object.freeze(
-      Object.assign(
-        {
-          target: '#calendarRoot'
-        },
-        restConfig
-      )
-    );
-    this.#resolveTarget(this.#config.target);
+    this.#config = Object.freeze(restConfig);
+    this.#resolveTarget(target);
   }
   #resolveTarget(target: string | Element) {
     const { wrapTarget } = this.#config;
@@ -51,23 +38,25 @@ export default class Calendar {
       }
     } else if (target instanceof Element) {
       this.#target = target;
+    } else {
+      throw new Error(ERR_TARGET);
     }
   }
-  #renderInternal(data: RenderedMonths, customTemplate?: string) {
+  #renderInternal(fragment: DocumentFragment) {
     if (this.#target) {
-      const fragment = renderTemplate(data, customTemplate);
       this.#target.innerHTML = '';
       this.#target.appendChild(fragment);
-    } else {
-      throw new Error('Target could not be resolved!');
     }
   }
 
-  render(template?: (props: TemplateProps) => string) {
-    this.#renderInternal(
-      this.#calendar.create().output(),
-      template?.(TEMPLATE_PROPS)
-    );
-    return this;
+  render(handler = defaultHandler) {
+    if (typeof handler === 'function') {
+      const data = this.#calendar.create().output();
+      this.#renderInternal(handler(TEMPLATE_PROPS, data, this.#config));
+    } else {
+      throw new Error(ERR_HANDLER);
+    }
   }
 }
+
+export * from 'argon-html';
