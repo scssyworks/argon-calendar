@@ -1,15 +1,4 @@
-export type TemplateProps = {
-  root: string;
-  header: string;
-  footer: string;
-  next: string;
-  prev: string;
-  main: string;
-  month: string;
-  date: string;
-  submit: string;
-  cancel: string;
-};
+import { TemplateProps } from '../Types';
 
 export const CALENDAR_ROOT = 'calendarRoot';
 
@@ -27,4 +16,3 @@ export const TEMPLATE_PROPS: TemplateProps = {
 };
 
 export const ERR_TARGET = 'Target element could not be resolved!';
-export const ERR_HANDLER = 'Template handler is not a function!';

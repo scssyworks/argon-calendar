@@ -1,7 +1,6 @@
 import { MONTHS, RenderedMonths, calendar } from 'argon-calendar-core';
 import { html, htmlString } from 'argon-html';
-import { TemplateProps } from '../Constants';
-import { CalConfig } from '../Types';
+import { CalConfig, TemplateProps } from '../Types';
 
 function createEl(className: string) {
   const el = document.createElement('div');
@@ -19,13 +18,48 @@ export function wrapElement(elem: Element): HTMLDivElement {
   return container;
 }
 
-export function defaultHandler(
+export function generateMonths(data: RenderedMonths, ids: TemplateProps) {
+  const availableMonths = data.map((m) => m.month);
+  return htmlString`${data.map((renderedMonth, index) => {
+    const { year, month, weekLabels, dates } = renderedMonth;
+    return htmlString`
+      <div class="argon-calendar-month" id="${`${ids.month}-${index}`}">
+        <div class="argon-calendar-summary">${month} ${year}</div>
+        <div class="argon-calendar-dates">
+        ${weekLabels.map(
+          (week) =>
+            htmlString`<div class="argon-calendar-week-label">${week.substring(
+              0,
+              2
+            )}</div>`
+        )}
+        ${dates.map((date, index) => {
+          const timestamp = date.getTime();
+          const isSelected = calendar.isToday(date);
+          const isOutside = !availableMonths.includes(MONTHS[date.getMonth()]);
+          return htmlString`
+            <button ${
+              isSelected ? '' : 'tabindex="-1"'
+            } class="argon-calendar-date${
+            isSelected ? ' argon-calendar-date-selected' : ''
+          }${
+            isOutside ? ' argon-calendar-date-outside' : ''
+          }" id="${`${ids.date}-${index}`}" data-timestamp="${timestamp}">
+              <span>${date.getDate()}</span>
+            </button>
+          `;
+        })}</div>
+      </div>
+    `;
+  })}`;
+}
+
+export function renderTemplate(
   ids: TemplateProps,
   data: RenderedMonths,
   config: CalConfig
 ): DocumentFragment {
   const { hideFooter, hideHeader } = config;
-  const availableMonths = data.map((m) => m.month);
   return html`
     <div class="argon-calendar-root" id="${ids.root}">
       ${
@@ -38,40 +72,7 @@ export function defaultHandler(
           : ''
       }
       <div class="argon-calendar-main" id="${ids.main}">
-        ${data.map((renderedMonth, index) => {
-          const { year, month, weekLabels, dates } = renderedMonth;
-          return htmlString`
-            <div class="argon-calendar-month" id="${`${ids.month}-${index}`}">
-              <div class="argon-calendar-summary">${month} ${year}</div>
-              <div class="argon-calendar-dates">
-              ${weekLabels.map(
-                (week) =>
-                  htmlString`<div class="argon-calendar-week-label">${week.substring(
-                    0,
-                    2
-                  )}</div>`
-              )}
-              ${dates.map((date, index) => {
-                const timestamp = date.getTime();
-                const isSelected = calendar.isToday(date);
-                const isOutside = !availableMonths.includes(
-                  MONTHS[date.getMonth()]
-                );
-                return htmlString`
-                  <button ${
-                    isSelected ? '' : 'tabindex="-1"'
-                  } class="argon-calendar-date${
-                  isSelected ? ' argon-calendar-date-selected' : ''
-                }${
-                  isOutside ? ' argon-calendar-date-outside' : ''
-                }" id="${`${ids.date}-${index}`}" data-timestamp="${timestamp}">
-                    <span>${date.getDate()}</span>
-                  </button>
-                `;
-              })}</div>
-            </div>
-          `;
-        })}
+        ${generateMonths(data, ids)}
       </div>
       ${
         !hideFooter
