@@ -1,5 +1,10 @@
 import { Calendar as CalendarCore, RenderedMonths } from 'argon-calendar-core';
-import { generateMonths, renderTemplate, wrapElement } from './Utils';
+import {
+  generateMonths,
+  renderTemplate,
+  resolveWeekLabels,
+  wrapElement
+} from './Utils';
 import { CALENDAR_ROOT, ERR_TARGET, TEMPLATE_PROPS } from './Constants';
 import { ArgonCalendarConfig, CalConfig, RenderHandler } from './Types';
 
@@ -9,6 +14,7 @@ export default class Calendar {
   #config: CalConfig;
   #userHandler: RenderHandler | null = null;
   #fragment: DocumentFragment | null = null;
+  #renderedMonths: RenderedMonths = [];
   #offset = 0;
   constructor(
     target = `#${CALENDAR_ROOT}`,
@@ -54,12 +60,15 @@ export default class Calendar {
   }
 
   #renderInternal() {
-    const data = this.#calendar.create(this.#offset).output();
+    this.#renderedMonths = resolveWeekLabels(
+      this.#calendar.create(this.#offset).output(),
+      this.#config
+    );
     const calendarMain = this.#target?.querySelector(`#${TEMPLATE_PROPS.main}`);
     if (calendarMain) {
-      calendarMain.innerHTML = generateMonths(data, TEMPLATE_PROPS);
+      calendarMain.innerHTML = generateMonths(this.#renderedMonths);
     } else {
-      this.#renderTemplate(data);
+      this.#renderTemplate(this.#renderedMonths);
       if (this.#target && this.#fragment) {
         this.#target.innerHTML = '';
         this.#target.appendChild(this.#fragment);
@@ -70,6 +79,8 @@ export default class Calendar {
   #bindEvents() {
     this.#target?.addEventListener('click', (event) => {
       const el = event.target as Element;
+      console.log(event.composedPath());
+      console.log(event);
       if (el.closest(`#${TEMPLATE_PROPS.next}`)) {
         this.#offset += 1;
         this.#renderInternal();

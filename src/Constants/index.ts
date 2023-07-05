@@ -9,10 +9,14 @@ export const TEMPLATE_PROPS: TemplateProps = {
   next: 'argonCalendarNext',
   prev: 'argonCalendarPrev',
   main: 'argonCalendarMain',
-  month: 'argonCalendarMonth',
-  date: 'argonCalendarDate',
   submit: 'argonCalendarSubmit',
   cancel: 'argonCalendarCancel'
 };
 
 export const ERR_TARGET = 'Target element could not be resolved!';
+
+export enum WeekLabelFormat {
+  LONG = 'long', // full length
+  SHORT = 'short', // length === 3
+  SHORTER = 'shorter' // length === 2 (default)
+}

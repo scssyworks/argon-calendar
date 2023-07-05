@@ -1,6 +1,7 @@
-import { MONTHS, RenderedMonths, calendar } from 'argon-calendar-core';
+import { MONTHS, RenderedMonths, Week, calendar } from 'argon-calendar-core';
 import { html, htmlString } from 'argon-html';
 import { CalConfig, TemplateProps } from '../Types';
+import { WeekLabelFormat } from '../Constants';
 
 function createEl(className: string) {
   const el = document.createElement('div');
@@ -18,33 +19,28 @@ export function wrapElement(elem: Element): HTMLDivElement {
   return container;
 }
 
-export function generateMonths(data: RenderedMonths, ids: TemplateProps) {
-  const availableMonths = data.map((m) => m.month);
-  return htmlString`${data.map((renderedMonth, index) => {
+export function generateMonths(data: RenderedMonths) {
+  return htmlString`${data.map((renderedMonth) => {
     const { year, month, weekLabels, dates } = renderedMonth;
     return htmlString`
-      <div class="argon-calendar-month" id="${`${ids.month}-${index}`}">
+      <div class="argon-calendar-month">
         <div class="argon-calendar-summary">${month} ${year}</div>
         <div class="argon-calendar-dates">
         ${weekLabels.map(
-          (week) =>
-            htmlString`<div class="argon-calendar-week-label">${week.substring(
-              0,
-              2
-            )}</div>`
+          (label) =>
+            htmlString`<div class="argon-calendar-week-label">${label}</div>`
         )}
-        ${dates.map((date, index) => {
-          const timestamp = date.getTime();
+        ${dates.map((date) => {
           const isSelected = calendar.isToday(date);
-          const isOutside = !availableMonths.includes(MONTHS[date.getMonth()]);
+          const isOutside = !data.some(
+            ({ month }) => month === MONTHS[date.getMonth()]
+          );
           return htmlString`
             <button ${
               isSelected ? '' : 'tabindex="-1"'
             } class="argon-calendar-date${
             isSelected ? ' argon-calendar-date-selected' : ''
-          }${
-            isOutside ? ' argon-calendar-date-outside' : ''
-          }" id="${`${ids.date}-${index}`}" data-timestamp="${timestamp}">
+          }${isOutside ? ' argon-calendar-date-outside' : ''}">
               <span>${date.getDate()}</span>
             </button>
           `;
@@ -72,7 +68,7 @@ export function renderTemplate(
           : ''
       }
       <div class="argon-calendar-main" id="${ids.main}">
-        ${generateMonths(data, ids)}
+        ${generateMonths(data)}
       </div>
       ${
         !hideFooter
@@ -85,4 +81,24 @@ export function renderTemplate(
       }
     </div>
   `;
+}
+
+export function resolveWeekLabels(
+  data: RenderedMonths,
+  config: CalConfig
+): RenderedMonths {
+  const { weekLabelFormat = WeekLabelFormat.SHORTER } = config;
+  return data.map((month) => ({
+    ...month,
+    weekLabels: month.weekLabels.map((label) => {
+      switch (weekLabelFormat) {
+        case WeekLabelFormat.LONG:
+          return label;
+        case WeekLabelFormat.SHORT:
+          return label.substring(0, 3) as Week;
+        default:
+          return label.substring(0, 2) as Week;
+      }
+    })
+  }));
 }

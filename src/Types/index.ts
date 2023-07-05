@@ -1,4 +1,5 @@
 import { CalendarConfig, RenderedMonths } from 'argon-calendar-core';
+import { WeekLabelFormat } from '../Constants';
 
 export type TemplateProps = {
   root: string;
@@ -7,8 +8,6 @@ export type TemplateProps = {
   next: string;
   prev: string;
   main: string;
-  month: string;
-  date: string;
   submit: string;
   cancel: string;
 };
@@ -18,6 +17,7 @@ export interface ArgonCalendarConfig extends CalendarConfig {
   rangeSelection?: boolean;
   hideHeader?: boolean;
   hideFooter?: boolean;
+  weekLabelFormat?: WeekLabelFormat;
 }
 
 export type CalConfig = Omit<
