@@ -109,8 +109,8 @@ export default class Calendar {
         const composedPath = event.composedPath();
         const composedPathSubset = composedPath
           .reverse()
-          .slice(composedPath.indexOf(mainContainer)) as Element[];
-        const [, monthElement, datesElement, dateElement] = composedPathSubset;
+          .slice(composedPath.indexOf(mainContainer) + 1) as Element[];
+        const [monthElement, datesElement, dateElement] = composedPathSubset;
         const currentSelectedDate = datesElement.querySelector(
           `.${SELECTED_DATE_CLASS}`
         );
