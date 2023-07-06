@@ -1,5 +1,5 @@
 import { MONTHS, RenderedMonths, Week, calendar } from 'argon-calendar-core';
-import { html, htmlString } from 'argon-html';
+import { html, htmlString, classNames } from 'argon-html';
 import { CalConfig, TemplateProps } from '../Types';
 import { WeekLabelFormat } from '../Constants';
 
@@ -43,11 +43,13 @@ export function generateMonths(data: RenderedMonths) {
             ({ month }) => month === MONTHS[date.getMonth()]
           );
           return htmlString`
-            <button ${
-              isSelected ? '' : 'tabindex="-1"'
-            } class="argon-calendar-date${
-            isSelected ? ' argon-calendar-date-selected' : ''
-          }${isOutside ? ' argon-calendar-date-outside' : ''}">
+            <button ${isSelected ? '' : 'tabindex="-1"'} class="${classNames(
+            'argon-calendar-date',
+            {
+              'argon-calendar-date-selected': isSelected,
+              'argon-calendar-date-outside': isOutside
+            }
+          )}">
               <span>${date.getDate()}</span>
             </button>
           `;
