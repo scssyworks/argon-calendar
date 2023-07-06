@@ -26,12 +26,11 @@ export type CalConfig = Omit<
 >;
 
 export type RenderProps = {
-  data: RenderedMonths;
   config: CalConfig;
   ids: TemplateProps;
 };
 
-export type RenderHandler = (
+export type UserHandler = (
   currentFragment: DocumentFragment,
   props: RenderProps
 ) => DocumentFragment;

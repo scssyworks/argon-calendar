@@ -9,6 +9,13 @@ function createEl(className: string) {
   return el;
 }
 
+export function findIndexOf(parent: Element, child: Element, ofType?: string) {
+  const currentChildren = Array.from(parent.children).filter((node) =>
+    ofType ? node.nodeName === ofType : true
+  );
+  return currentChildren.indexOf(child);
+}
+
 export function wrapElement(elem: Element): HTMLDivElement {
   const wrapper = createEl('argon-calendar-wrapper');
   const container = createEl('argon-calendar');
@@ -52,7 +59,6 @@ export function generateMonths(data: RenderedMonths) {
 
 export function renderTemplate(
   ids: TemplateProps,
-  data: RenderedMonths,
   config: CalConfig
 ): DocumentFragment {
   const { hideFooter, hideHeader } = config;
@@ -67,9 +73,7 @@ export function renderTemplate(
             </div>`
           : ''
       }
-      <div class="argon-calendar-main" id="${ids.main}">
-        ${generateMonths(data)}
-      </div>
+      <div class="argon-calendar-main" id="${ids.main}"></div>
       ${
         !hideFooter
           ? htmlString`
