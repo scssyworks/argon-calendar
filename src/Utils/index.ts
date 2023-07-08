@@ -1,4 +1,4 @@
-import { MONTHS, RenderedMonths, Week, calendar } from 'argon-calendar-core';
+import { MONTHS, RenderedMonths, Week, Calendar } from 'argon-calendar-core';
 import { html, htmlString, classNames } from 'argon-html';
 import { CalConfig, TemplateProps } from '../Types';
 import { WeekLabelFormat } from '../Constants';
@@ -20,14 +20,14 @@ export function wrapElement(elem: Element): HTMLDivElement {
   const wrapper = createEl('argon-calendar-wrapper');
   const container = createEl('argon-calendar');
   wrapper.appendChild(container);
-  const parentElem = elem.parentElement;
-  parentElem?.insertBefore(wrapper, elem);
+  elem.parentElement?.insertBefore(wrapper, elem);
   wrapper.prepend(elem);
   return container;
 }
 
-export function generateMonths(data: RenderedMonths) {
-  return htmlString`${data.map((renderedMonth) => {
+export function generateMonths(data: RenderedMonths, selectedDate?: Date) {
+  const months = data.map((item) => item.month);
+  return htmlString`${data.map((renderedMonth, monthIndex) => {
     const { year, month, weekLabels, dates } = renderedMonth;
     return htmlString`
       <div class="argon-calendar-month">
@@ -38,18 +38,35 @@ export function generateMonths(data: RenderedMonths) {
             htmlString`<div class="argon-calendar-week-label">${label}</div>`
         )}
         ${dates.map((date) => {
-          const isSelected = calendar.isToday(date);
-          const isOutside = !data.some(
-            ({ month }) => month === MONTHS[date.getMonth()]
-          );
+          const isOutside = date.getMonth() !== MONTHS.indexOf(month);
+          const isRedundant =
+            isOutside && months.includes(MONTHS[date.getMonth()]);
+          const isOutsidePrevious =
+            isOutside && !isRedundant && monthIndex === 0;
+          const isOutsideNext =
+            isOutside && !isRedundant && monthIndex === data.length - 1;
+          const isToday = !isOutside && Calendar.isToday(date);
+          const isSelected =
+            !isOutside &&
+            Calendar.compare(
+              date,
+              selectedDate ? selectedDate : Calendar.today()
+            );
           return htmlString`
-            <button ${isSelected ? '' : 'tabindex="-1"'} class="${classNames(
-            'argon-calendar-date',
-            {
-              'argon-calendar-date-selected': isSelected,
-              'argon-calendar-date-outside': isOutside
-            }
-          )}">
+            <button ${
+              isSelected ? '' : 'tabindex="-1"'
+            } ${
+            isRedundant ? `data-is-redundant="${isRedundant}"` : ''
+          } data-offset="${
+            isOutsidePrevious ? -1 : isOutsideNext ? 1 : 0
+          }" class="${classNames('argon-calendar-date', {
+            'argon-calendar-date-today': isToday,
+            'argon-calendar-date-selected': isSelected,
+            'argon-calendar-date-outside': isOutside,
+            'argon-calendar-date-redundant': isRedundant,
+            'argon-calendar-date-outside-prev': isOutsidePrevious,
+            'argon-calendar-date-outside-next': isOutsideNext
+          })}">
               <span>${date.getDate()}</span>
             </button>
           `;

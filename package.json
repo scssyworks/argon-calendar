@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/scssyworks/argon-calendar#readme",
   "dependencies": {
-    "argon-calendar-core": "^0.0.7",
+    "argon-calendar-core": "^0.1.0",
     "argon-html": "^0.0.11"
   }
 }

@@ -74,7 +74,7 @@ export default class Calendar {
     }
   }
 
-  #renderInternal() {
+  #renderInternal(selectedDate?: Date) {
     this.#renderedMonths = resolveWeekLabels(
       this.#calendar.create(this.#offset).output(),
       this.#config
@@ -85,7 +85,10 @@ export default class Calendar {
         `#${TEMPLATE_PROPS.main}`
       );
       if (calendarMain) {
-        calendarMain.innerHTML = generateMonths(this.#renderedMonths);
+        calendarMain.innerHTML = generateMonths(
+          this.#renderedMonths,
+          selectedDate
+        );
       } else {
         throw new Error(ERR_MAIN);
       }
@@ -109,17 +112,27 @@ export default class Calendar {
         const composedPath = event.composedPath();
         const composedPathSubset = composedPath
           .reverse()
-          .slice(composedPath.indexOf(mainContainer) + 1) as Element[];
+          .slice(composedPath.indexOf(mainContainer) + 1) as HTMLElement[];
         const [monthElement, datesElement, dateElement] = composedPathSubset;
-        const currentSelectedDate = datesElement.querySelector(
-          `.${SELECTED_DATE_CLASS}`
-        );
-        currentSelectedDate?.classList.remove(SELECTED_DATE_CLASS);
-        currentSelectedDate?.setAttribute('tabindex', '-1');
-        dateElement.removeAttribute('tabindex');
-        dateElement.classList.add(SELECTED_DATE_CLASS);
         const monthIndex = findIndexOf(mainContainer, monthElement);
         const dateIndex = findIndexOf(datesElement, dateElement, 'BUTTON');
+        const selectedDate = this.#renderedMonths[monthIndex].dates[dateIndex];
+        const { offset = '0', isRedundant } = dateElement.dataset;
+        const offsetNum = +offset;
+        if (!isRedundant) {
+          if (offsetNum === 0) {
+            const currentSelectedDate = mainContainer.querySelector(
+              `.${SELECTED_DATE_CLASS}`
+            );
+            currentSelectedDate?.classList.remove(SELECTED_DATE_CLASS);
+            currentSelectedDate?.setAttribute('tabindex', '-1');
+            dateElement.removeAttribute('tabindex');
+            dateElement.classList.add(SELECTED_DATE_CLASS);
+          } else {
+            this.#offset += offsetNum;
+            this.#renderInternal(selectedDate);
+          }
+        }
       }
     });
   }
