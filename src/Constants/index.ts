@@ -23,3 +23,5 @@ export enum WeekLabelFormat {
 }
 
 export const SELECTED_DATE_CLASS = 'argon-calendar-date-selected';
+export const WRAPPER_CLASS = 'argon-calendar-wrapper';
+export const CONTAINER_CLASS = 'argon-calendar';

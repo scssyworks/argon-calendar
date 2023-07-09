@@ -34,3 +34,15 @@ export type UserHandler = (
   currentFragment: DocumentFragment,
   props: RenderProps
 ) => DocumentFragment;
+
+export type CustomDate = {
+  date: Date;
+  formatted: string;
+  isOutsideDate: boolean;
+  isToday: boolean;
+  // Post render fields
+  isOutsidePrevious?: boolean;
+  isOutsideNext?: boolean;
+  isRedundant?: boolean;
+  isSelected?: boolean;
+};
