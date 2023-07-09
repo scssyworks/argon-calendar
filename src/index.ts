@@ -14,6 +14,7 @@ import {
   TEMPLATE_PROPS
 } from './Constants';
 import { ArgonCalendarConfig, CalConfig, UserHandler } from './Types';
+import { version as vers } from '../package.json';
 
 export default class Calendar {
   #target: Element | null = null;
@@ -22,6 +23,7 @@ export default class Calendar {
   #userHandler: UserHandler | null = null;
   #fragment: DocumentFragment | null = null;
   #renderedMonths: RenderedMonths = [];
+  #selectedDate: Date | null = null;
   #offset = 0;
   constructor(
     target = `#${CALENDAR_ROOT}`,
@@ -74,7 +76,7 @@ export default class Calendar {
     }
   }
 
-  #renderInternal(selectedDate?: Date) {
+  #renderInternal() {
     this.#renderedMonths = resolveWeekLabels(
       this.#calendar.create(this.#offset).output(),
       this.#config
@@ -87,7 +89,7 @@ export default class Calendar {
       if (calendarMain) {
         calendarMain.innerHTML = generateMonths(
           this.#renderedMonths,
-          selectedDate
+          this.#selectedDate
         );
       } else {
         throw new Error(ERR_MAIN);
@@ -116,7 +118,7 @@ export default class Calendar {
         const [monthElement, datesElement, dateElement] = composedPathSubset;
         const monthIndex = findIndexOf(mainContainer, monthElement);
         const dateIndex = findIndexOf(datesElement, dateElement, 'BUTTON');
-        const selectedDate = this.#renderedMonths[monthIndex].dates[dateIndex];
+        this.#selectedDate = this.#renderedMonths[monthIndex].dates[dateIndex];
         const { offset = '0', isRedundant } = dateElement.dataset;
         const offsetNum = +offset;
         if (!isRedundant) {
@@ -130,7 +132,7 @@ export default class Calendar {
             dateElement.classList.add(SELECTED_DATE_CLASS);
           } else {
             this.#offset += offsetNum;
-            this.#renderInternal(selectedDate);
+            this.#renderInternal();
           }
         }
       }
@@ -142,6 +144,10 @@ export default class Calendar {
       this.#userHandler = handler;
     }
     this.#renderInternal();
+  }
+
+  get version() {
+    return vers;
   }
 }
 

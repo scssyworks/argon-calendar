@@ -1,4 +1,4 @@
-import { MONTHS, RenderedMonths, Week, Calendar } from 'argon-calendar-core';
+import { RenderedMonths, Week, Calendar } from 'argon-calendar-core';
 import { html, htmlString, classNames } from 'argon-html';
 import { CalConfig, TemplateProps } from '../Types';
 import { WeekLabelFormat } from '../Constants';
@@ -25,10 +25,12 @@ export function wrapElement(elem: Element): HTMLDivElement {
   return container;
 }
 
-export function generateMonths(data: RenderedMonths, selectedDate?: Date) {
-  const months = data.map((item) => item.month);
-  return htmlString`${data.map((renderedMonth, monthIndex) => {
-    const { year, month, weekLabels, dates } = renderedMonth;
+export function generateMonths(
+  data: RenderedMonths,
+  selectedDate?: Date | null
+) {
+  return htmlString`${data.map((renderedMonth, mIndex) => {
+    const { year, month, monthIndex, weekLabels, dates } = renderedMonth;
     return htmlString`
       <div class="argon-calendar-month">
         <div class="argon-calendar-summary">${month} ${year}</div>
@@ -38,13 +40,12 @@ export function generateMonths(data: RenderedMonths, selectedDate?: Date) {
             htmlString`<div class="argon-calendar-week-label">${label}</div>`
         )}
         ${dates.map((date) => {
-          const isOutside = date.getMonth() !== MONTHS.indexOf(month);
+          const isOutside = date.getMonth() !== monthIndex;
           const isRedundant =
-            isOutside && months.includes(MONTHS[date.getMonth()]);
-          const isOutsidePrevious =
-            isOutside && !isRedundant && monthIndex === 0;
-          const isOutsideNext =
-            isOutside && !isRedundant && monthIndex === data.length - 1;
+            isOutside && data.some((m) => m.monthIndex === date.getMonth());
+          const isValidOutside = isOutside && !isRedundant;
+          const isOutsidePrevious = isValidOutside && mIndex === 0;
+          const isOutsideNext = isValidOutside && mIndex === data.length - 1;
           const isToday = !isOutside && Calendar.isToday(date);
           const isSelected =
             !isOutside &&
